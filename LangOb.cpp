@@ -6,9 +6,7 @@
 #include <map>
 #include "LangOb.h"
 #include "BisonOb.tab.h"
-
-//std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;
-//std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;         
+      
 
 char lbl = 0;
 int building_var_right (Node* p, int level);
@@ -80,13 +78,6 @@ Node* ex(Node* p1) {
 				return nullptr;
 			}
 			case '\n': { Node* n = ex(p->children[0]);
-				if (n == nullptr) {
-					return ex(p->children[1]);
-				}
-				// if (n->type == typeId) {
-					// VarNode* varn = dynamic_cast<VarNode*>(n);
-					// go_proc(varn);
-				// }
 				return ex(p->children[1]);
 			}
 			case ':': {Node* n = building_var_left(p, 0);
@@ -115,7 +106,6 @@ Node* ex(Node* p1) {
 					std::cout << "Procedure identifier recursion" << std::endl;
 				}
 				return n11;
-
 			}
 			case '%': {
 				Node* n1 = building_var_left(p->children[0], 0);
@@ -129,7 +119,6 @@ Node* ex(Node* p1) {
 				if (IdStore.find({ varn2->vtype, varn2->name }) != IdStore.end() && IdStore[{varn2->vtype, varn2->name}].find(varn2->ind) != IdStore[{varn2->vtype, varn2->name}].end()) {
 					varn2 = IdStore[{varn2->vtype, varn2->name}][varn2->ind];
 				}
-				
 				for (int i = 0; i < varn1->id_1.size(); ++i) {
 					if (ProcStore[{(varn1->id_1[i])->vtype, (varn1->id_1[i])->name}][varn1->id_1[i]->ind] == ProcStore[{varn2->vtype, varn2->name}][varn2->ind]) {
 						varn1->id_1.erase(varn1->id_1.begin() + i);
@@ -153,13 +142,19 @@ Node* ex(Node* p1) {
 				VarNode* varn1 = dynamic_cast<VarNode*>(n);
 				Node* n2 = p->children[1];
 				if (varn1->vtype == 2) {
-					ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = n2;
 					if (n2->type == typeOpr) {
 						OprNode* oprn = dynamic_cast<OprNode*>(n2);
+						if (oprn->oper == 'c') {
+							VarNode* varn = dynamic_cast<VarNode*>(oprn->children[0]);
+							go_proc(varn);
+						}
+						ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = n2;
 						if (oprn->oper == ':' || oprn->oper == ';') {
 							n2 = ex(p->children[1]);
 							VarNode* varn2 = dynamic_cast<VarNode*>(n2);
-							ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = ProcStore[{varn2->vtype, varn2->name}][varn2->ind];
+							if (varn2->vtype == 2)
+								ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = ProcStore[{varn2->vtype, varn2->name}][varn2->ind];
+							go_proc(varn2);
 						}
 					}
 				}
@@ -250,6 +245,7 @@ Node* ex(Node* p1) {
 				bool b2 = 0;
 				if (n1->type == typeId) {
 					VarNode* varn = dynamic_cast<VarNode*> (n1);
+					go_proc(varn);
 					b1 = VarStore[{varn->vtype, varn->name}][varn->ind];
 				}
 				if (n1->type == typeCon) {
@@ -258,6 +254,7 @@ Node* ex(Node* p1) {
 				}
 				if (n2->type == typeId) {
 					VarNode* varn = dynamic_cast<VarNode*> (n2);
+					go_proc(varn);
 					b2 = VarStore[{varn->vtype, varn->name}][varn->ind];
 				}
 				if (n2->type == typeCon) {
@@ -320,41 +317,67 @@ Node* ex(Node* p1) {
 				// }
 				// return !(r1 || r2);
 			}
-			case 'c': { Node* n = ex(p->children[0]);
-				if (n == nullptr) {
-					Node* n1 = con(0, 0);
+				case 'c': { Node* n = ex(p->children[0]);
+					if (n == nullptr) {
+						Node* n1 = con(0, 0);
+						return n1;
+					}
+					if (n->type == typeN) {
+						Node* n1 = con(0, 0);
+						return n1;
+					}
+					if (n->type == typeCon) {
+						ConNode* conn1 = dynamic_cast<ConNode*> (n);
+						return conn1;
+					}
+					VarNode* varn = dynamic_cast<VarNode*>(n);
+					go_proc(varn);
+					return varn;
+				}
+				case GOTO: {  Node* n = ex(p->children[0]);
+					if (n->type == typeCon) {
+						ConNode* conn1 = dynamic_cast<ConNode*> (n);
+						if (conn1->value) {
+							VarNode* varn = dynamic_cast<VarNode*>(p->children[1]);
+							if (addr.find(varn->name) == addr.end())
+								std::cout << "Label with this name not declared" << std::endl;
+							else
+								lbl = varn->name;
+						}
+					}
+					if (n->type == typeId) {
+						VarNode* varn = dynamic_cast<VarNode*>(n);
+						if (varn->vtype == 2) {
+							err_arr.push_back("A procedure variable cannot be a condition");
+						}
+						else if (VarStore[{varn->vtype, varn->name}][varn->ind]) {
+							VarNode* varn = dynamic_cast<VarNode*>(p->children[1]);
+							if (addr.find(varn->name) == addr.end())
+								err_arr.push_back("Label with this name not declared");
+							else
+								lbl = varn->name;
+						}
+					}
+					Node* n1 = con(1, 0);
 					return n1;
+					}
 				}
-				if (n->type == typeN) {
-					Node* n1 = con(0, 0);
-					return n1;
-				}
-				if (n->type == typeCon) {
-					ConNode* conn1 = dynamic_cast<ConNode*> (n);
-					return conn1;
-				}
-				VarNode* varn = dynamic_cast<VarNode*>(n);
-				go_proc(varn);
-				return varn;
-			}
-					/*case GOTO: {VarNode* varn = dynamic_cast<VarNode*>(p->children[0]); //////////////////////////////////////////////РАЗОБРАТЬСЯ С МЕТКАМИ
-						if (!addr[varn->i])
-							printf("Identificator '%c' is not detected: - ignore goto!\n", varn->name);
-						else
-							lbl = varn->i;
-						return 0;}*/
 			}
 		}
-		}
-	else
+else
 	{
-		switch (p1->type) {
-		case typeCon: {return nullptr; }
-		case typeId: {return nullptr; }
+	switch (p1->type) {
+		case typeCon: {Node* n11 = con(0, 0);
+			return n11;
+		}
+		case typeId: {Node* n11 = con(0, 0);
+			return n11;
+		}
 		case typeOpr: {
 			OprNode* p = dynamic_cast<OprNode*>(p1);
 			switch (p->oper) {
-			case WHILE: {int r = 0;
+			case WHILE: {
+				int r = 0;
 				Node* n;
 				ex(p->children[1]);
 				do {
@@ -369,22 +392,26 @@ Node* ex(Node* p1) {
 						r = VarStore[{varn->vtype, varn->name}][varn->ind];
 					}
 				} while (r);
-				return nullptr; }
+				Node* n11 = con(0, 0);
+				return n11;
+			}
 			case '\n': {ex(p->children[0]); return ex(p->children[1]); }
-			default: return nullptr;
+			default: {Node* n11 = con(0, 0);
+				return n11; }
 			}
 		}
-		}
-		return nullptr;
+	}
+	Node* n11 = con(0, 0);
+	return n11;
 	}
 }
-int exec(Node *p)
+int exec(Node* p)
 {
 	do
 	{
 		ex(p);
-	}
-	while (lbl);
+	} while (lbl);
+	return 0;
 }
 
 

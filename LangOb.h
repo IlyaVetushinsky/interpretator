@@ -25,7 +25,7 @@ typedef class ConNode : public Node{
 
 typedef class VarNode : public Node{
 	public:
-	int vtype; // 0- bool, 1- int, 2- proc
+	int vtype; // 0- bool, 1- int, 2- proc, 3- label
 	int name;
 	std::vector<int> ind; // indexes
 	std::vector<VarNode*> id_1;//что идентифицирует эта переменная
@@ -64,7 +64,6 @@ extern Node* building_var_left (Node* p, int level);
 extern int building_var_right (Node* p, int level);
 extern void print_Tree(Node *p, int level);
 extern int yylex();
-extern void init (void);
 extern void yyerror(char*);
 extern Node* ex_find_er(Node *p1);
 extern int exec_find_er(Node *p);
@@ -77,8 +76,11 @@ extern void push_Varlist(Node* p);
 extern int find_var(Node* p);
 extern void clear_id_store(std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >>& IdStore);
 extern Node *np();
+extern void l_ballance(Node* n);
+extern int lb_ballance(Node* p);
+extern void wrong_lbls();
 extern std::vector<std::string> err_arr;
 extern std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;
 extern std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;  
-extern std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >> IdStore;       
-extern Node* addr[26];
+extern std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >> IdStore; 
+extern std::map<int, Node*> addr;    

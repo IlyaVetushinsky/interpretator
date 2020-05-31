@@ -96,19 +96,21 @@ void push_Varlist(Node* p);
 int find_var(Node* p);
 void clear_id_store(std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >>& IdStore);
 extern Node *np();
+void l_ballance(Node* n);
+int lb_ballance(Node* p);
+void wrong_lbls();
 int yylex();
-void init (void);
 void yyerror(char *s);
 std::vector<std::string> err_arr;
 std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;    
 std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;   
 std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >> IdStore;      
 std::vector<std::vector<int>> Varlist;
-Node* addr[26];
+std::map<int, Node*> addr;
 char lbll = 0;
 
 
-#line 112 "BisonOb.tab.c" /* yacc.c:339  */
+#line 114 "BisonOb.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -175,13 +177,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 47 "BisonOb.y" /* yacc.c:355  */
+#line 49 "BisonOb.y" /* yacc.c:355  */
 
 	int iValue;                 /* integer value */
 	int sIndex;                /* name *//////////////////////
 	Node *nPtr;             /* node pointer */
 
-#line 185 "BisonOb.tab.c" /* yacc.c:355  */
+#line 187 "BisonOb.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -198,7 +200,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 202 "BisonOb.tab.c" /* yacc.c:358  */
+#line 204 "BisonOb.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -498,10 +500,10 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    66,    66,    80,    81,    85,    86,    87,    88,    89,
-      90,    91,    92,    93,    94,    95,    99,   100,   104,   105,
-     106,   107,   108,   109,   110,   111,   112,   113,   114,   115,
-     116
+       0,    68,    68,    92,    93,    97,    98,    99,   100,   101,
+     102,   103,   104,   105,   106,   107,   111,   112,   116,   117,
+     118,   119,   120,   121,   122,   123,   124,   125,   126,   127,
+     128
 };
 #endif
 
@@ -1325,8 +1327,18 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 66 "BisonOb.y" /* yacc.c:1646  */
-    { err_arr.clear(); print_Tree((yyvsp[0].nPtr),0); exec_find_er((yyvsp[0].nPtr));
+#line 68 "BisonOb.y" /* yacc.c:1646  */
+    { 
+				print_Tree((yyvsp[0].nPtr), 0);
+				lb_ballance((yyvsp[0].nPtr));
+				if (err_arr.size() != 0) {
+					for (int i = 0; i < err_arr.size(); ++i) {
+						std::cout << err_arr[i] << std::endl;
+					}
+					exit(0);
+				}
+				exec_find_er((yyvsp[0].nPtr));
+				wrong_lbls();
 				if (err_arr.size() != 0) {
 					for (int i = 0; i < err_arr.size(); ++i) {
 						std::cout << err_arr[i] << std::endl;
@@ -1337,179 +1349,179 @@ yyreduce:
 				ProcStore.clear();
 				clear_id_store(IdStore);
 				exec((yyvsp[0].nPtr)); freeNode((yyvsp[0].nPtr));exit(0);}
-#line 1341 "BisonOb.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 3:
-#line 80 "BisonOb.y" /* yacc.c:1646  */
-    {(yyval.nPtr) =  opr("\\n", '\n', 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr));/*ex($2); freeNode($2);*/ }
-#line 1347 "BisonOb.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 4:
-#line 81 "BisonOb.y" /* yacc.c:1646  */
-    { init(); (yyval.nPtr) = 0;}
 #line 1353 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 5:
-#line 85 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("\\n", '\n', 2, NULL, NULL); }
+  case 3:
+#line 92 "BisonOb.y" /* yacc.c:1646  */
+    {(yyval.nPtr) =  opr("\\n", '\n', 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr));/*ex($2); freeNode($2);*/ }
 #line 1359 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 6:
-#line 86 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("call", 'c', 1, (yyvsp[-1].nPtr)); }
+  case 4:
+#line 93 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = 0;}
 #line 1365 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 7:
-#line 87 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("print", PRINT, 1, (yyvsp[-1].nPtr)); }
+  case 5:
+#line 97 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("\\n", '\n', 2, NULL, NULL); }
 #line 1371 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 8:
-#line 88 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("<-", '=', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+  case 6:
+#line 98 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("call", 'c', 1, (yyvsp[-1].nPtr)); }
 #line 1377 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 9:
-#line 89 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("@", '@', 2, (yyvsp[-3].nPtr), (yyvsp[-1].nPtr)); }
+  case 7:
+#line 99 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("print", PRINT, 1, (yyvsp[-1].nPtr)); }
 #line 1383 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 10:
-#line 90 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("%", '%', 2, (yyvsp[-3].nPtr), (yyvsp[-1].nPtr)); }
+  case 8:
+#line 100 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("<-", '=', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1389 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 11:
-#line 91 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("while", WHILE, 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+  case 9:
+#line 101 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("@", '@', 2, (yyvsp[-3].nPtr), (yyvsp[-1].nPtr)); }
 #line 1395 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 12:
-#line 92 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr)= (yyvsp[-1].nPtr); }
+  case 10:
+#line 102 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("%", '%', 2, (yyvsp[-3].nPtr), (yyvsp[-1].nPtr)); }
 #line 1401 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 13:
-#line 93 "BisonOb.y" /* yacc.c:1646  */
-    { setlabel ((yyvsp[-1].sIndex), (yyvsp[0].nPtr)); (yyval.nPtr) = (yyvsp[0].nPtr);}
+  case 11:
+#line 103 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("while", WHILE, 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1407 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 14:
-#line 94 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("go to", GOTO, 1, id((yyvsp[-1].sIndex),2));}
+  case 12:
+#line 104 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr)= (yyvsp[-1].nPtr); }
 #line 1413 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 15:
-#line 95 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("go to", GOTO, 1, id((yyvsp[-1].sIndex),2));}
+  case 13:
+#line 105 "BisonOb.y" /* yacc.c:1646  */
+    { setlabel((yyvsp[-1].sIndex),(yyvsp[0].nPtr)); (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1419 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 16:
-#line 99 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+  case 14:
+#line 106 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("go to", GOTO, 2, (yyvsp[-3].nPtr), id((yyvsp[-1].sIndex),3));}
 #line 1425 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 17:
-#line 100 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("\\n", '\n', 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr)); }
+  case 15:
+#line 107 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("go to", GOTO, 2, (yyvsp[-4].nPtr), id((yyvsp[-1].sIndex),3));}
 #line 1431 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 18:
-#line 104 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = con((yyvsp[0].iValue), 1); }
+  case 16:
+#line 111 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1437 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 19:
-#line 105 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = id((yyvsp[0].sIndex),1); }
+  case 17:
+#line 112 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("\\n", '\n', 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr)); }
 #line 1443 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 20:
-#line 106 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("eq", EQ, 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+  case 18:
+#line 116 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = con((yyvsp[0].iValue), 1); }
 #line 1449 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 21:
-#line 107 "BisonOb.y" /* yacc.c:1646  */
-    {(yyval.nPtr) = opr("inc", INC, 1, (yyvsp[0].nPtr)); }
+  case 19:
+#line 117 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = id((yyvsp[0].sIndex),1); }
 #line 1455 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 22:
-#line 108 "BisonOb.y" /* yacc.c:1646  */
-    {(yyval.nPtr) = opr("dec", DEC, 1, (yyvsp[0].nPtr)); }
+  case 20:
+#line 118 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("eq", EQ, 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1461 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 23:
-#line 109 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr(":", ':', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr));}
+  case 21:
+#line 119 "BisonOb.y" /* yacc.c:1646  */
+    {(yyval.nPtr) = opr("inc", INC, 1, (yyvsp[0].nPtr)); }
 #line 1467 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 24:
-#line 110 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr(";", ';', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr));}
+  case 22:
+#line 120 "BisonOb.y" /* yacc.c:1646  */
+    {(yyval.nPtr) = opr("dec", DEC, 1, (yyvsp[0].nPtr)); }
 #line 1473 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 25:
-#line 111 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[-1].nPtr); }
+  case 23:
+#line 121 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr(":", ':', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr));}
 #line 1479 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 26:
-#line 112 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = con((yyvsp[0].iValue), 0); }
+  case 24:
+#line 122 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr(";", ';', 2, (yyvsp[-2].nPtr), (yyvsp[0].nPtr));}
 #line 1485 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 27:
-#line 113 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = id((yyvsp[0].sIndex),0); }
+  case 25:
+#line 123 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[-1].nPtr); }
 #line 1491 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 28:
-#line 114 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = opr("parr", PARR, 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr));}
+  case 26:
+#line 124 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = con((yyvsp[0].iValue), 0); }
 #line 1497 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 29:
-#line 115 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = id((yyvsp[0].sIndex),2); }
+  case 27:
+#line 125 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = id((yyvsp[0].sIndex),0); }
 #line 1503 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
-  case 30:
-#line 116 "BisonOb.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = np(); }
+  case 28:
+#line 126 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = opr("parr", PARR, 2, (yyvsp[-1].nPtr), (yyvsp[0].nPtr));}
 #line 1509 "BisonOb.tab.c" /* yacc.c:1646  */
     break;
 
+  case 29:
+#line 127 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = id((yyvsp[0].sIndex),2); }
+#line 1515 "BisonOb.tab.c" /* yacc.c:1646  */
+    break;
 
-#line 1513 "BisonOb.tab.c" /* yacc.c:1646  */
+  case 30:
+#line 128 "BisonOb.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = np(); }
+#line 1521 "BisonOb.tab.c" /* yacc.c:1646  */
+    break;
+
+
+#line 1525 "BisonOb.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1737,7 +1749,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 124 "BisonOb.y" /* yacc.c:1906  */
+#line 136 "BisonOb.y" /* yacc.c:1906  */
 
 
 
@@ -1765,6 +1777,86 @@ Node *opr(std::string n, int oper, int nops, ...) {
 Node* np() {
 	Node* p = new Null();
 	return p;
+}
+
+
+struct lp {
+	int L_is;
+	int G_is;
+};
+
+std::map<int, lp> t_lstore;
+
+struct LQA {
+	std::vector<int> Q;
+	std::vector<int> A;
+};
+
+LQA L_qa;
+
+
+
+void l_ballance(Node* p) {
+	if (p) {
+		if (p->label) {
+			lp l = { 0,0 };
+			t_lstore.emplace(p->label, l);
+			std::map<int, lp>::iterator it;
+			it = t_lstore.find(p->label);
+			it->second.L_is = 1;
+			
+		}
+		if (p->type == typeOpr) {
+			OprNode* oprn = dynamic_cast<OprNode*>(p);
+			if (oprn->oper == GOTO) {
+				Node* n = oprn->children[1];
+				VarNode* varn = dynamic_cast<VarNode*>(n);
+				lp l = { 0,0 };
+				t_lstore.emplace(varn->name, l);
+				std::map<int, lp>::iterator it;
+				it = t_lstore.find(varn->name);
+				it->second.G_is = 1;
+			}
+			if (oprn->oper == '=') {
+				l_ballance(oprn->children[0]);
+				return;
+			}
+			for (int i = 0; i < oprn->nops; ++i) {
+				l_ballance(oprn->children[i]);
+			}
+		}
+	}
+}
+
+int lb_ballance(Node* p) {
+	l_ballance(p);
+	int k = 0;
+	std::map<int, lp>::iterator it;
+	for (auto it = t_lstore.begin(); it != t_lstore.end(); ++it) {
+		if (it->second.L_is == 1) {
+			//err_arr.push_back("Entering the procedure by the label from the outside");
+			L_qa.Q.push_back(it->first);
+		}
+		if (it->second.G_is == 1 && it->second.L_is == 0) {
+			err_arr.push_back("Label leads beyond procedure or Label with this name not declared");
+			L_qa.A.push_back(it->first);
+			++k;
+		}
+	}
+	for (auto it = t_lstore.begin(); it != t_lstore.end(); ++it) {
+		it->second = {0,0};
+	}
+	return k;
+}
+
+void wrong_lbls() {
+	for (int i = 0; i< L_qa.Q.size(); ++i) {
+		for (int j = 0;j< L_qa.A.size(); ++j)
+			if (L_qa.Q[i] == L_qa.A[j]) {
+				err_arr.push_back("Entering the procedure by the label from the outside");
+				//err_arr.push_back(std::to_string(L_qa.A[j]));
+			}
+	}
 }
 
 void clear_id_store(std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >>& IdStore) {
@@ -1882,11 +1974,16 @@ void go_proc_er(VarNode* varn1) {
 		varn1 = IdStore[{varn1->vtype, varn1->name}][varn1->ind];
 	}
 	for (int i = 0; i < varn1->id_1.size(); ++i) {
+		if (varn1 == varn1->id_1[i]) {
+			return ;
+		}
 		if ((varn1->id_1[i])->id_1.size()) {
 			go_proc_er(varn1->id_1[i]);
 		}
 		VarNode* varn2 = varn1->id_1[i];
-		ex_find_er(ProcStore[{varn2->vtype, varn2->name}][varn2->ind]);
+		Node* n = ProcStore[{varn2->vtype, varn2->name}][varn2->ind];
+		if (!lb_ballance(n))
+			ex_find_er(ProcStore[{varn2->vtype, varn2->name}][varn2->ind]);
 	}
 }
 
@@ -1922,6 +2019,8 @@ Node* ex_find_er(Node* p1) {
 					VarNode* varn2 = dynamic_cast<VarNode*>(n2);
 					if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
 						err_arr.push_back("Uninitialized memory access");
+						Node* n11 = con(0, 0);
+						return n11;
 					}
 				}
 				return nullptr; }
@@ -1939,18 +2038,21 @@ Node* ex_find_er(Node* p1) {
 					}
 					go_proc_er(varn1);
 				}
-				return nullptr; }
+				Node* n11 = con(1, 0);
+				return n11; 
+			}
 			case '\n': { ex_find_er(p->children[0]); return ex_find_er(p->children[1]); }
 			case ':': {Node* n = building_var_left(p, 0);
 				VarNode* varn = dynamic_cast<VarNode*>(n);
 				return varn;
 			}
-			case ';': {Node* n0 = building_var_left(p->children[0], 0);
-				if (n0->type == typeId) {
-					VarNode* varn0 = dynamic_cast<VarNode*>(n0);
-					if (varn0->ind.size() == 0) {
-						err_arr.push_back("Incorrect indexing mode, expected ':' after array name");
-					}
+			case ';': {Node* n0 = p;
+				while (n0->children.size()!= 0 && n0->children[0]->type == typeOpr) {
+					n0 = n0->children[0];
+				}
+				OprNode* oprn = dynamic_cast<OprNode*>(n0);
+				if (oprn->oper == ';') {
+					err_arr.push_back("Incorrect indexing mode, expected ':' after array name");
 				}
 				Node* n = building_var_left(p, 0);
 				VarNode* varn = dynamic_cast<VarNode*>(n);
@@ -1960,22 +2062,22 @@ Node* ex_find_er(Node* p1) {
 				Node* n1 = ex_find_er(p->children[0]);
 				Node* n2 = ex_find_er(p->children[1]);
 				if (n1 == nullptr) {
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeN) {
 					err_arr.push_back("np cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeCon) {
 					err_arr.push_back("Constant cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeOpr) {
 					err_arr.push_back("Operation cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				VarNode* varn1 = dynamic_cast<VarNode*>(n1);
@@ -1983,7 +2085,7 @@ Node* ex_find_er(Node* p1) {
 					err_arr.push_back("A variable with this name already exists");
 				}
 				if (n2 == nullptr) {
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n2->type != typeId) {
@@ -1991,7 +2093,7 @@ Node* ex_find_er(Node* p1) {
 				}
 				else {
 					VarNode* varn2 = dynamic_cast<VarNode*>(n2);
-					if (!(ProcStore.find({ varn2->vtype, varn2->name }) != ProcStore.end() && ProcStore[{varn2->vtype, varn2->name}].find(varn2->ind) != ProcStore[{varn2->vtype, varn2->name}].end()) && !(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end()) ) {
+					if (!(ProcStore.find({ varn2->vtype, varn2->name }) != ProcStore.end() && ProcStore[{varn2->vtype, varn2->name}].find(varn2->ind) != ProcStore[{varn2->vtype, varn2->name}].end())) {
 						err_arr.push_back("Uninitialized memory access");
 					}
 					if (varn2->vtype != 2) {
@@ -2010,10 +2112,10 @@ Node* ex_find_er(Node* p1) {
 					else {
 						n11 = con(0, 0);
 					}
-					if (varn2->id_2.size() > 30) {
+					if (varn2->id_2.size() > 20) {
 						int f = 0;
 						for (int i = 0; i < varn2->id_2.size(); ++i) {
-							if (varn2->id_2[i] == varn2->id_2[10])
+							if (varn2->id_2[i] == varn2->id_2[5])
 								++f;
 						}
 						if (f > 10) {
@@ -2028,34 +2130,34 @@ Node* ex_find_er(Node* p1) {
 				Node* n1 = ex_find_er(p->children[0]);
 				Node* n2 = ex_find_er(p->children[1]);
 				if (n1 == nullptr) {
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeN) {
 					err_arr.push_back("np cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeCon) {
 					err_arr.push_back("Constant cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n1->type == typeOpr) {
 					err_arr.push_back("Operation cannot be an identifier");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				VarNode* varn1 = dynamic_cast<VarNode*>(n1);
 				if (n2 == nullptr) {
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				if (n2->type != typeId) {
 					err_arr.push_back("The right value for identification can only be a procedure variabler");
 				}
 				else {
-					VarNode* varn2 = dynamic_cast<VarNode*>(n2);			
+					VarNode* varn2 = dynamic_cast<VarNode*>(n2);
 					if (!(ProcStore.find({ varn2->vtype, varn2->name }) != ProcStore.end() && ProcStore[{varn2->vtype, varn2->name}].find(varn2->ind) != ProcStore[{varn2->vtype, varn2->name}].end())) {
 						err_arr.push_back("Uninitialized memory access");
 					}
@@ -2071,7 +2173,6 @@ Node* ex_find_er(Node* p1) {
 					if (IdStore.find({ varn2->vtype, varn2->name }) != IdStore.end() && IdStore[{varn2->vtype, varn2->name}].find(varn2->ind) != IdStore[{varn2->vtype, varn2->name}].end()) {
 						varn2 = IdStore[{varn2->vtype, varn2->name}][varn2->ind];
 					}
-					
 					for (int i = 0; i < varn1->id_1.size(); ++i) {
 						if (ProcStore[{(varn1->id_1[i])->vtype, (varn1->id_1[i])->name}][varn1->id_1[i]->ind] == ProcStore[{varn2->vtype, varn2->name}][varn2->ind]) {
 							varn1->id_1.erase(varn1->id_1.begin() + i);
@@ -2094,22 +2195,22 @@ Node* ex_find_er(Node* p1) {
 			case '=': { Node* n = ex_find_er(p->children[0]);
 				Node* n2 = p->children[1];
 				if (n == nullptr) {
-					Node* n1 = con(1, 0);
+					Node* n1 = con(0, 0);
 					return n1;
 				}
 				if (n->type == typeN) {
 					err_arr.push_back("Assigning a value to a np");
-					Node* n1 = con(1, 0);
+					Node* n1 = con(0, 0);
 					return n1;
 				}
 				if (n->type == typeCon) {
 					err_arr.push_back("Assigning a value to a constant");
-					Node* n1 = con(1, 0);
+					Node* n1 = con(0, 0);
 					return n1;
 				}
 				if (n->type == typeOpr) {
 					err_arr.push_back("Operation cannot be an lvalue");
-					Node* n11 = con(1, 0);
+					Node* n11 = con(0, 0);
 					return n11;
 				}
 				VarNode* varn1 = dynamic_cast<VarNode*>(n);
@@ -2117,12 +2218,12 @@ Node* ex_find_er(Node* p1) {
 					err_arr.push_back("A variable with this name already exists");
 				}
 				if (n2 == nullptr) {
-					Node* n1 = con(1, 0);
+					Node* n1 = con(0, 0);
 					return n1;
 				}
 				if (n2->type == typeN) {
 					err_arr.push_back("Assigning a np");
-					Node* n1 = con(1, 0);
+					Node* n1 = con(0, 0);
 					return n1;
 				}
 				if (varn1->vtype == 2) {
@@ -2133,7 +2234,7 @@ Node* ex_find_er(Node* p1) {
 						if (oprn->oper == ':' || oprn->oper == ';') {
 							n2 = building_var_left(p->children[1], 0);
 							VarNode* varn2 = dynamic_cast<VarNode*>(n2);
-							if (varn1->vtype == 1 && varn2->vtype == 2) {
+							if ( varn2->vtype != 2) {
 								err_arr.push_back("Non procedural variable cannot be assigned a procedural variable");
 							}
 							if (varn2->vtype == 2) {
@@ -2144,6 +2245,14 @@ Node* ex_find_er(Node* p1) {
 					}
 				}
 				else {
+					if (n2->type == typeOpr) {
+						OprNode* oprn = dynamic_cast<OprNode*>(n2);
+						if (oprn->oper == '\n') {
+							err_arr.push_back("A statement cannot be assigned to a non-procedural variable");
+							Node* n1 = con(0, 0);
+							return n1;
+						}
+					}
 					n2 = ex_find_er(p->children[1]);
 					if (n2->type == typeCon) {
 						ConNode* conn = dynamic_cast<ConNode*>(n2);
@@ -2152,19 +2261,18 @@ Node* ex_find_er(Node* p1) {
 					}
 					if (n2->type == typeId) {
 						VarNode* varn2 = dynamic_cast<VarNode*>(n2);
+						if (varn2->vtype == 2) {
+							err_arr.push_back("Non procedural variable cannot be assigned a procedural variable");
+						}
 						VarStore[{varn1->vtype, varn1->name}][varn1->ind] = VarStore[{varn2->vtype, varn2->name}][varn2->ind];
 						push_Varlist(varn1);
 						go_proc_er(varn2);
-					}
-					if (n2->type == typeOpr) {
-						err_arr.push_back("A statement cannot be assigned to a non-procedural variable");
-						Node* n1 = con(1, 0);
-						return n1;
 					}
 				}
 				Node* n1 = con(1, 0);
 				return n1;
 			}
+
 			case INC: { Node* n = ex_find_er(p->children[0]);
 				if (n->type != typeId) {
 					err_arr.push_back("Incrementing a constant");
@@ -2216,11 +2324,19 @@ Node* ex_find_er(Node* p1) {
 							err_arr.push_back("Uninitialized memory access");
 						}
 						go_proc_er(varn2);
+						if (varn1->vtype != 2 && varn2->vtype != 2) {
+							Node* n12 = con((VarStore[{varn1->vtype, varn1->name}][varn1->ind] == VarStore[{varn2->vtype, varn2->name}][varn2->ind]), 0);
+							return n12;
+						}
 					}
 					if (n2->type == typeCon) {
 						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
 						if (varn1->vtype != conn2->ctype) {
 							err_arr.push_back("Comparison of variables of different types");
+						}
+						if (varn1->vtype != 2 ) {
+							Node* n12 = con((VarStore[{varn1->vtype, varn1->name}][varn1->ind] == conn2->value), 0);
+							return n12;
 						}
 					}
 				}
@@ -2235,15 +2351,25 @@ Node* ex_find_er(Node* p1) {
 							err_arr.push_back("Uninitialized memory access");
 						}
 						go_proc_er(varn2);
+						if (varn2->vtype != 2) {
+							Node* n12 = con((conn1->value == VarStore[{varn2->vtype, varn2->name}][varn2->ind]), 0);
+							return n12;
+						}
 					}
 					if (n2->type == typeCon) {
 						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
 						if (conn1->ctype != conn2->ctype) {
 							err_arr.push_back("Comparison of variables of different types");
 						}
+						int f = 0;
+						if (conn1->value == conn2->value) {
+							f = 1;
+						}
+						Node* n12 = con(f, 0);
+						return n12;
 					}
 				}
-				Node* n12 = con(1, 0);
+				Node* n12 = con(0, 0);
 				return n12;
 			}
 			case PARR: {Node* n1 = ex_find_er(p->children[0]);
@@ -2263,6 +2389,7 @@ Node* ex_find_er(Node* p1) {
 							err_arr.push_back("Uninitialized memory access");
 						}
 						go_proc_er(varn2);
+						
 					}
 					if (n2->type == typeCon) {
 						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
@@ -2290,7 +2417,7 @@ Node* ex_find_er(Node* p1) {
 						}
 					}
 				}
-				Node* n11 = con(1, 0);
+				Node* n11 = con(0, 0);
 				return n11;
 
 				}
@@ -2317,34 +2444,88 @@ Node* ex_find_er(Node* p1) {
 					go_proc_er(varn);
 					return varn;
 				}
-					 /*case GOTO: {VarNode* varn = dynamic_cast<VarNode*>(p->children[0]); //////////////////////////////////////////////РАЗОБРАТЬСЯ С МЕТКАМИ
-						 if (!addr[varn->i])
-							 printf("Identificator '%c' is not detected: - ignore goto!\n", varn->name);
-						 else
-							 lbll = varn->i;
-						 return 0;}*/
+				case GOTO: {  Node* n = ex_find_er(p->children[0]);
+					if (n == nullptr) {
+						Node* n1 = con(1, 0);
+						return n1;
+					}
+					if (n->type == typeN) {
+						err_arr.push_back("np cannot be a condition");
+						Node* n1 = con(1, 0);
+						return n1;
+					}
+					if (n->type == typeCon) {
+						ConNode* conn1 = dynamic_cast<ConNode*> (n);
+						VarNode* varn = dynamic_cast<VarNode*>(p->children[1]);
+						if (addr.find(varn->name) == addr.end())
+							err_arr.push_back("Label with this name not declared");
+						if (conn1->value) {
+							if (addr.find(varn->name) != addr.end())
+								lbll = varn->name;
+						}
+					}
+					if (n->type == typeId) {
+						VarNode* varn = dynamic_cast<VarNode*>(n);
+						if (varn->vtype == 2) {
+							err_arr.push_back("A procedure variable cannot be a condition");
+						}
+						else if (VarStore[{varn->vtype, varn->name}][varn->ind]) {
+							VarNode* varn = dynamic_cast<VarNode*>(p->children[1]);
+							if (addr.find(varn->name) == addr.end())
+								err_arr.push_back("Label with this name not declared");
+							else
+								lbll= varn->name;
+						}
+					}
+					Node* n1 = con(1, 0);
+					return n1;
+				}
 			}
 		}
 		}
 	}
 	else
 	{
-		switch (p1->type) {
-		case typeCon: {return nullptr; }
-		case typeId: {return nullptr; }
+	switch (p1->type) {
+		case typeN: {Node* n11 = con(0, 0);
+			return n11;
+		}
+		case typeCon: {Node* n11 = con(0, 0);
+			return n11;
+		}
+		case typeId: {Node* n11 = con(0, 0);
+			return n11;
+		}
 		case typeOpr: {
 			OprNode* p = dynamic_cast<OprNode*>(p1);
 			switch (p->oper) {
-			case 1: {
+			case WHILE: {
+				int r = 0;
+				Node* n;
 				ex_find_er(p->children[1]);
-				ex_find_er(p->children[0]);
-				return nullptr; }
+				do {
+					n = ex_find_er(p->children[0]);
+					if (n->type == typeCon) {
+						ConNode* conn = dynamic_cast<ConNode*> (n);
+						r = conn->value;
+					}
+					else if (n->type == typeId) {
+						VarNode* varn = dynamic_cast<VarNode*> (n);
+						go_proc(varn);
+						r = VarStore[{varn->vtype, varn->name}][varn->ind];
+					}
+				} while (r);
+				Node* n11 = con(0, 0);
+				return n11;
+			}
 			case '\n': {ex_find_er(p->children[0]); return ex_find_er(p->children[1]); }
-			default: return nullptr;
+			default: {Node* n11 = con(0, 0);
+				return n11; }
 			}
 		}
-		}
-		return nullptr;
+	}
+	Node* n11 = con(0, 0);
+	return n11;
 	}
 }
 int exec_find_er(Node* p)
@@ -2353,6 +2534,7 @@ int exec_find_er(Node* p)
 	{
 		ex_find_er(p);
 	} while (lbll);
+	return 0;
 }
 
 
@@ -2458,15 +2640,10 @@ void freeNode(Node *p) {
 
 void setlabel (int i,Node *p)
 {
+	if (addr.find(i) != addr.end())
+		err_arr.push_back("Label with this name is already declared");
 	p->label = i;
-	addr[i] = p;
-}
-
-void init (void)
-{
-	int i;
-	for (i = 0;i<26;++i)
-	addr[i] = 0;
+	addr.insert({ i,p });
 }
 
 void yyerror(char *s) {
