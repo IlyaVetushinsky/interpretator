@@ -1,0 +1,22 @@
+
+nexpr:
+	INTEGER                 { $$ = con($1, 1); }
+	| INTVAR				{ $$ = id($1,1); }
+	| nexpr EQ nexpr        { $$ = opr("eq", EQ, 2, $1, $3); }
+	| INC nexpr				{$$ = opr("inc", INC, 1, $2); }           //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО ПЕРЕМЕННАЯ
+	| DEC nexpr				{$$ = opr("dec", DEC, 1, $2); }			  //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО ПЕРЕМЕННАЯ
+	| nexpr ':' nexpr		{ $$ = opr(":", ':', 2, $1, $3);}		 //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО переменная
+	| nexpr ';' nexpr 		{ $$ = opr(";", ';', 2, $1, $3);} 		  //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО массив
+	| '(' nexpr ')'           { $$ = $2; }
+	;
+	
+lexpr:
+	LOGIC							{ $$ = con($1, 0); }
+	| LOGVAR						{ $$ = id($1,0); }
+	| PARR lexpr lexpr				{ $$ = opr("parr", 'PARR', 2, $2, $3);}
+	| lexpr	EQ lexpr	         	{ $$ = opr("eq", EQ, 2, $1, $3); }
+	| lexpr ':' nexpr				{ $$ = opr(":", ':', 2, $1, $3);}
+	| lexpr ';' nexpr 				{ $$ = opr(";", ';', 2, $1, $3);}
+	| '(' lexpr ')'         		{ $$ = $2; }
+	;
+	

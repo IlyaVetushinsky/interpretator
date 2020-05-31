@@ -63,11 +63,12 @@ extern int yydebug;
     ML = 273,
     TP = 274,
     AS = 275,
-    EQ = 276,
-    INC = 277,
-    DEC = 278,
-    PARR = 279,
-    UMINUS = 280
+    SN = 276,
+    EQ = 277,
+    INC = 278,
+    DEC = 279,
+    PARR = 280,
+    UMINUS = 281
   };
 #endif
 
@@ -76,13 +77,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 28 "BisonOb.y" /* yacc.c:1909  */
+#line 47 "BisonOb.y" /* yacc.c:1909  */
 
 	int iValue;                 /* integer value */
 	int sIndex;                /* name *//////////////////////
 	Node *nPtr;             /* node pointer */
 
-#line 86 "BisonOb.tab.h" /* yacc.c:1909  */
+#line 87 "BisonOb.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

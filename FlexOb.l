@@ -11,32 +11,44 @@
 #include "BisonOb.tab.h"
 void yyerror(char *);
 %}
+%option yylineno
 %%
-[TF]	{
-	yylval.iValue = atoi(yytext);
+"T"	{
+	//yylloc.last_line = yylloc.first_line = yylineno; 
+	yylval.iValue = 1;
+	return LOGIC;
+}
+"F" {
+	//yylloc.last_line = yylloc.first_line = yylineno; 
+	yylval.iValue = 0;
 	return LOGIC;
 }
 "\."[0-9]+ { 
+	//yylloc.last_line = yylloc.first_line = yylineno; 
 	++yytext;
 	yylval.sIndex = atoi(yytext);
 	return LOGVAR;
 	}
 ","[0-9]+ { 
+	//yylloc.last_line = yylloc.first_line = yylineno; 
 	++yytext;
 	yylval.sIndex = atoi(yytext);
 	return INTVAR;
 	}
 "$"[0-9]+ { 
+	//yylloc.last_line = yylloc.first_line = yylineno; 
 	++yytext;
 	yylval.sIndex = atoi(yytext);
 	return PROC;
 	}
 "~"[0-9]+ { 
+	//yylloc.last_line = yylloc.first_line = yylineno; 
 	++yytext;
 	yylval.sIndex = atoi(yytext);
 	return LABEL;
 	}
-[0-9]+ {
+("-"){0,1}[0-9]+ {
+	//yylloc.last_line = yylloc.first_line = yylineno; 
 	yylval.iValue = atoi(yytext);
 	return INTEGER;
 	}
@@ -44,7 +56,6 @@ void yyerror(char *);
 ",*" return DEC;
 ".#" return PARR;
 "eq" return EQ;
-ЦИКЛ?
 "np" return NP;
 "mf" return MF;
 "mb" return MB;
@@ -54,7 +65,7 @@ void yyerror(char *);
 "<-" return AS;
 "please" return PLS;
 "print" return PRINT;
-[@%\n-;:.] return *yytext; 
-[ \t]+ ;
-. yyerror("Unknown character");
+[@%\n\{\};:\(\)\[\].] return *yytext; 
+[ \t\r]+ ;
+. { yyerror("Unknown character");}
 %%

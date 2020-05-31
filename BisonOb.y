@@ -16,12 +16,31 @@ Node *con(int value, int t);
 void setlabel (int i ,Node *p);
 void freeNode(Node *p);
 int exec(Node *p);
+Node* ex_find_er(Node *p1);
+int exec_find_er(Node *p);
+Node* building_var_left (Node* p, int level);
+int building_var_right (Node* p, int level);
 void print_Tree(Node *p, int level);
+void init_VL();
+void go_proc(VarNode* varn);
+void go_proc_er(VarNode* varn);
+int find_rec_right(VarNode* varn1,VarNode* varn2);
+int find_rec_left(VarNode* varn1,VarNode* varn2);
+int find_rec(VarNode* &varn1,VarNode* &varn2);
+void push_Varlist(Node* p);
+int find_var(Node* p);
+void clear_id_store(std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >>& IdStore);
+extern Node *np();
 int yylex();
 void init (void);
 void yyerror(char *s);
-extern std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;                  
+std::vector<std::string> err_arr;
+std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;    
+std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;   
+std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >> IdStore;      
+std::vector<std::vector<int>> Varlist;
 Node* addr[26];
+char lbll = 0;
 
 %}
 
@@ -33,18 +52,28 @@ Node* addr[26];
 %nonassoc END
 %token <iValue> INTEGER LOGIC
 %token <sIndex> LOGVAR INTVAR LABEL PROC
-%token WHILE PRINT GOTO PLS NP MF MB MR ML TP AS
+%token WHILE PRINT GOTO PLS NP MF MB MR ML TP AS SN
 %left ';'
 %right ':'
 %left EQ
 %right INC DEC PARR
 %nonassoc UMINUS
-%type <nPtr> stmt nexpr nvariable narr lexpr lvariable larr stmt_list function integ bool
+%type <nPtr> stmt stmt_list function expr
 
 %%
 
 program:
-	function {exec($1); print_Tree($1,0); freeNode($1);exit(0);}
+	function { err_arr.clear(); print_Tree($1,0); exec_find_er($1);
+				if (err_arr.size() != 0) {
+					for (int i = 0; i < err_arr.size(); ++i) {
+						std::cout << err_arr[i] << std::endl;
+					}
+					exit(0);
+				}
+				VarStore.clear();
+				ProcStore.clear();
+				clear_id_store(IdStore);
+				exec($1); freeNode($1);exit(0);}
 	;
 	
 function:
@@ -54,17 +83,16 @@ function:
 	
 stmt:
 	'\n'	{ $$ = opr("\\n", '\n', 2, NULL, NULL); }																		
-	| nexpr '\n'                       { $$ = $1; }
-	| lexpr '\n'                       { $$ = $1; }
-	| PRINT nexpr '\n' 					{ $$ = opr("print", PRINT, 1, $2); }
-	| PRINT lexpr '\n' 					{ $$ = opr("print", PRINT, 1, $2); }
-	| nvariable AS nexpr '\n'          { $$ = opr("<-", '=', 2, $1, $3); }
-	| lvariable AS lexpr '\n' 			{ $$ = opr("<-", '=', 2, $1, $3); }
-	|'(' lexpr ')' stmt       	 		 { $$ = opr("while", WHILE, 2, $2, $4); }
+	| expr '\n'                       { $$ = opr("call", 'c', 1, $1); }
+	| PRINT expr '\n' 					{ $$ = opr("print", PRINT, 1, $2); }
+	| expr AS stmt 						{ $$ = opr("<-", '=', 2, $1, $3); }
+	| expr '@' expr '\n' 					{ $$ = opr("@", '@', 2, $1, $3); }
+	| expr '%' expr	'\n' 					{ $$ = opr("%", '%', 2, $1, $3); }
+	|'(' expr ')' stmt       	 		 { $$ = opr("while", WHILE, 2, $2, $4); }
 	| '{' stmt_list '}'               { $$= $2; }
 	| LABEL stmt				  		{ setlabel ($1, $2); $$ = $2;}
-	| '[' lexpr ']' LABEL '\n'		  { $$ = opr("go to", GOTO, 1, id($4,2));}
-	| '[' lexpr ']' PLS LABEL '\n'	  { $$ = opr("go to", GOTO, 1, id($5,2));}
+	| '[' expr ']' LABEL '\n'		  { $$ = opr("go to", GOTO, 1, id($4,2));}
+	| '[' expr ']' PLS LABEL '\n'	  { $$ = opr("go to", GOTO, 1, id($5,2));}
 	;
 
 stmt_list:
@@ -72,49 +100,22 @@ stmt_list:
 	| stmt_list stmt        { $$ = opr("\\n", '\n', 2, $1, $2); }
 	;
 
-nexpr:
-	integ                	 { $$ = $1 }
-	| nvariable              { $$ = $1; }
-	| '(' nexpr ')'           { $$ = $2; }
+expr:
+	INTEGER                 { $$ = con($1, 1); }
+	| INTVAR				{ $$ = id($1,1); }
+	| expr EQ expr        { $$ = opr("eq", EQ, 2, $1, $3); }
+	| INC expr				{$$ = opr("inc", INC, 1, $2); }           //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО не процедура
+	| DEC expr				{$$ = opr("dec", DEC, 1, $2); }			  //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО не процедура
+	| expr ':' expr		{ $$ = opr(":", ':', 2, $1, $3);}		 //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО переменная
+	| expr ';' expr 		{ $$ = opr(";", ';', 2, $1, $3);} 		  //СДЕЛАТЬ ПРОВЕРКУ НА ТО ЧТО ЭТО массив
+	| '(' expr ')'           { $$ = $2; }								 //СДЕЛАТЬ кучу проверок
+	| LOGIC							{ $$ = con($1, 0); }
+	| LOGVAR						{ $$ = id($1,0); }
+	| PARR expr expr				{ $$ = opr("parr", PARR, 2, $2, $3);}
+	| PROC							{ $$ = id($1,2); }
+	| NP							{ $$ = np(); }
 	;
 
-nvariable:
-	INTVAR							{ $$ = id($1,1); }
-	| narr							{ $$ = $1; }
-	| INC nvariable				{$$ = opr("inc", INC, 1, $2); }
-	| DEC nvariable				{$$ = opr("dec", DEC, 1, $2); }
-	| nvariable EQ integ          { $$ = opr("eq", EQ, 2, $1, $3); }
-	;
-	
-narr:
-	INTVAR ':' nexpr				{ $$ = opr(":", ':', 2, $1, $3);}
-	|narr ';' nexpr					{ $$ = opr(";", ';', 2, $1, $3);}
-	;
-	
-integ:
-	INTEGER                  { $$ = con($1, 1); }
-	| '-' integ %prec UMINUS { $$ = opr("-", UMINUS, 1, $2); }	
-	
-lexpr:
-	bool							{ $$ = $1; }
-	| lvariable             		{ $$ = $1; }
-	| PARR lexpr lexpr				{ $$ = opr("parr", 'PARR', 2, $2, $3);}
-	| '(' lexpr ')'         		{ $$ = $2; }
-	;
-
-lvariable:
-	LOGVAR							{ $$ = id($1,0); }
-	| larr							{ $$ = $1; }
-	| lvariable EQ bool         	{ $$ = opr("eq", EQ, 2, $1, $3); }
-	;
-	
-larr:
-	LOGVAR ':' nexpr				{ $$ = opr(":", ':', 2, $1, $3);}
-	|larr ';' nexpr					{ $$ = opr(";", ';', 2, $1, $3);}
-	;
-	
-bool:
-	LOGIC							{ $$ = con($1, 0); }
 	
 	
 	
@@ -125,10 +126,6 @@ bool:
 
 
 Node *con(int value, int t) {
-	if (t == 0 && value == 70)
-		value = 0;
-	else if (t == 0)
-		value = 1;
 	Node *p = new ConNode(value, t, typeCon);
 	return p;
 }
@@ -147,6 +144,689 @@ Node *opr(std::string n, int oper, int nops, ...) {
 	va_end(ap);
 	return p;
 }
+
+Node* np() {
+	Node* p = new Null();
+	return p;
+}
+
+void clear_id_store(std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >>& IdStore) {
+	std::map < std::vector<int>, std::map < std::vector<int>, VarNode* >> ::iterator it;
+	for (auto it = IdStore.begin(); it != IdStore.end(); ++it) {
+		std::map < std::vector<int>, VarNode* >::iterator it1;
+		for (auto it1 = it->second.begin(); it1 != it->second.end(); ++it1) {
+			it1->second->id_1.clear();
+			it1->second->id_2.clear();
+		}
+	}
+}
+
+int find_var(Node* p) {
+	VarNode* varn = dynamic_cast<VarNode*>(p);
+	int t = 0;
+	int a = 0;
+	a = varn->ind.size();
+	if (varn->vtype == 0) {
+		t = 0;
+		if (a)
+			t = 3;
+	}
+	if (varn->vtype == 1) {
+		t = 1;
+		if (a) {
+			t = 4;
+		}
+	}
+	if (varn->vtype == 2) {
+		t = 2;
+		if (a)
+			t = 5;
+	}
+	for (int i = 0; i < Varlist.size(); ++i) {
+		for (int j = 0; j < Varlist[i].size(); ++j) {
+			if (varn->name == Varlist[i][j] && i != t)
+				return 1;
+		}
+	}
+	return 0;
+}
+
+void push_Varlist(Node* p) {
+	VarNode* varn = dynamic_cast<VarNode*>(p);
+	int t = 0;
+	if (varn->vtype == 0) {
+		t = 0;
+		if (varn->ind.size())
+			t = 3;
+	}
+	if (varn->vtype == 1) {
+		t = 1;
+		if (varn->ind.size())
+			t = 4;
+	}
+	if (varn->vtype == 2) {
+		t = 2;
+		if (varn->ind.size())
+			t = 5;
+	}
+	Varlist[t].push_back(varn->name);
+}
+
+int find_rec_left(VarNode* varn1, VarNode* varn2) {
+	int k = 0;
+	for (int i = 0; i < varn1->id_2.size(); ++i) {
+		if ((varn1->id_2[i])->id_2.size()) {
+			k = find_rec_left(varn1->id_2[i], varn2);
+		}
+		else {
+			VarNode* varn = varn1->id_2[i];
+			if (ProcStore[{varn->vtype, varn->name}][varn->ind] == ProcStore[{varn2->vtype, varn2->name}][varn2->ind]) {
+				k = 1;
+			}
+		}
+	}
+	return k;
+}
+
+int find_rec_right(VarNode* varn1, VarNode* varn2) {
+	int k = 0;
+	for (int i = 0; i < varn2->id_1.size(); ++i) {
+		if ((varn2->id_1[i])->id_1.size()) {
+			k = find_rec_right(varn1, varn2->id_1[i]);
+		}
+		else {
+			VarNode* varn = varn2->id_1[i];
+			if (ProcStore[{varn->vtype, varn->name}][varn->ind] == ProcStore[{varn1->vtype, varn1->name}][varn1->ind]) {
+				k = 1;
+			}
+		}
+	}
+	return k;
+}
+
+int find_rec(VarNode* &varn1, VarNode* &varn2) {
+	int k = 0;
+	if (IdStore.find({ varn1->vtype, varn1->name }) != IdStore.end() && IdStore[{varn1->vtype, varn1->name}].find(varn1->ind) != IdStore[{varn1->vtype, varn1->name}].end()) {
+		varn1 = IdStore[{varn1->vtype, varn1->name}][varn1->ind];
+	}
+	if (IdStore.find({ varn2->vtype, varn2->name }) != IdStore.end() && IdStore[{varn2->vtype, varn2->name}].find(varn2->ind) != IdStore[{varn2->vtype, varn2->name}].end()) {
+		varn2 = IdStore[{varn2->vtype, varn2->name}][varn2->ind];
+	}
+	if (varn1 == varn2) {
+		return 1;
+	}
+	k = find_rec_left(varn1, varn2);
+	k = find_rec_right(varn1, varn2);
+	return k;
+}
+
+void go_proc_er(VarNode* varn1) {
+	if (IdStore.find({ varn1->vtype, varn1->name }) != IdStore.end() && IdStore[{varn1->vtype, varn1->name}].find(varn1->ind) != IdStore[{varn1->vtype, varn1->name}].end()) {
+		varn1 = IdStore[{varn1->vtype, varn1->name}][varn1->ind];
+	}
+	for (int i = 0; i < varn1->id_1.size(); ++i) {
+		if ((varn1->id_1[i])->id_1.size()) {
+			go_proc_er(varn1->id_1[i]);
+		}
+		VarNode* varn2 = varn1->id_1[i];
+		ex_find_er(ProcStore[{varn2->vtype, varn2->name}][varn2->ind]);
+	}
+}
+
+
+Node* ex_find_er(Node* p1) {
+	if (!p1) return nullptr;
+	if (lbll == p1->label)
+		lbll = 0;
+	if (!lbll) {
+		switch (p1->type) {
+		case typeN: { Null* n = dynamic_cast<Null*>(p1); return n; }
+		case typeCon: {ConNode* conn = dynamic_cast<ConNode*>(p1); return conn; }
+		case typeId: {VarNode* varn = dynamic_cast<VarNode*>(p1); return varn; }
+		case typeOpr: {
+			OprNode* p = dynamic_cast<OprNode*>(p1);
+			switch (p->oper) {
+			case WHILE: {Node* n1 = ex_find_er(p->children[0]);
+				Node* n2 = ex_find_er(p->children[1]);
+				if (n1->type == typeN) {
+					err_arr.push_back("No action operator cannot be a condition");
+				}
+				if (n2->type == typeN) {
+					err_arr.push_back("No action operator cannot be a condition");
+				}
+				if (n1->type == typeId) {
+					VarNode* varn1 = dynamic_cast<VarNode*>(n1);
+					if (!(VarStore.find({ varn1->vtype, varn1->name }) != VarStore.end() && VarStore[{varn1->vtype, varn1->name}].find(varn1->ind) != VarStore[{varn1->vtype, varn1->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					go_proc_er(varn1);
+				}
+				if (n2->type == typeId) {
+					VarNode* varn2 = dynamic_cast<VarNode*>(n2);
+					if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+				}
+				return nullptr; }
+			case PRINT: {Node* n1 = ex_find_er(p->children[0]);
+				if (n1->type == typeN) {
+					err_arr.push_back("No action operator cannot be displayed");
+				}
+				if (n1->type == typeId) {
+					VarNode* varn1 = dynamic_cast<VarNode*>(n1);
+					if (!(VarStore.find({ varn1->vtype, varn1->name }) != VarStore.end() && VarStore[{varn1->vtype, varn1->name}].find(varn1->ind) != VarStore[{varn1->vtype, varn1->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					if (varn1->vtype == 2) {
+						err_arr.push_back("The procedure variable cannot be displayed");
+					}
+					go_proc_er(varn1);
+				}
+				return nullptr; }
+			case '\n': { ex_find_er(p->children[0]); return ex_find_er(p->children[1]); }
+			case ':': {Node* n = building_var_left(p, 0);
+				VarNode* varn = dynamic_cast<VarNode*>(n);
+				return varn;
+			}
+			case ';': {Node* n0 = building_var_left(p->children[0], 0);
+				if (n0->type == typeId) {
+					VarNode* varn0 = dynamic_cast<VarNode*>(n0);
+					if (varn0->ind.size() == 0) {
+						err_arr.push_back("Incorrect indexing mode, expected ':' after array name");
+					}
+				}
+				Node* n = building_var_left(p, 0);
+				VarNode* varn = dynamic_cast<VarNode*>(n);
+				return varn;
+			}
+			case '@': {
+				Node* n1 = ex_find_er(p->children[0]);
+				Node* n2 = ex_find_er(p->children[1]);
+				if (n1 == nullptr) {
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeN) {
+					err_arr.push_back("np cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeCon) {
+					err_arr.push_back("Constant cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeOpr) {
+					err_arr.push_back("Operation cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				VarNode* varn1 = dynamic_cast<VarNode*>(n1);
+				if (find_var(varn1)) {
+					err_arr.push_back("A variable with this name already exists");
+				}
+				if (n2 == nullptr) {
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n2->type != typeId) {
+					err_arr.push_back("The right value for identification can only be a procedure variabler");
+				}
+				else {
+					VarNode* varn2 = dynamic_cast<VarNode*>(n2);
+					if (!(ProcStore.find({ varn2->vtype, varn2->name }) != ProcStore.end() && ProcStore[{varn2->vtype, varn2->name}].find(varn2->ind) != ProcStore[{varn2->vtype, varn2->name}].end()) && !(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end()) ) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					if (varn2->vtype != 2) {
+						err_arr.push_back("The right value for identification can only be a procedure variabler");
+						Node* n11 = con(1, 0);
+						return n11;
+					}
+					int k = find_rec(varn1, varn2);
+					Node* n11 = con(1, 0);
+					if (!k) {
+						varn1->id_1.push_back(varn2);
+						varn2->id_2.push_back(varn1);
+						IdStore[{varn1->vtype, varn1->name}][varn1->ind] = varn1;
+						IdStore[{varn2->vtype, varn2->name}][varn2->ind] = varn2;
+					}
+					else {
+						n11 = con(0, 0);
+					}
+					if (varn2->id_2.size() > 30) {
+						int f = 0;
+						for (int i = 0; i < varn2->id_2.size(); ++i) {
+							if (varn2->id_2[i] == varn2->id_2[10])
+								++f;
+						}
+						if (f > 10) {
+							err_arr.push_back("Procedure identifier recursion");
+							clear_id_store(IdStore);
+						}
+					}
+					return n11;
+				}
+			}
+			case '%': {
+				Node* n1 = ex_find_er(p->children[0]);
+				Node* n2 = ex_find_er(p->children[1]);
+				if (n1 == nullptr) {
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeN) {
+					err_arr.push_back("np cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeCon) {
+					err_arr.push_back("Constant cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n1->type == typeOpr) {
+					err_arr.push_back("Operation cannot be an identifier");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				VarNode* varn1 = dynamic_cast<VarNode*>(n1);
+				if (n2 == nullptr) {
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				if (n2->type != typeId) {
+					err_arr.push_back("The right value for identification can only be a procedure variabler");
+				}
+				else {
+					VarNode* varn2 = dynamic_cast<VarNode*>(n2);			
+					if (!(ProcStore.find({ varn2->vtype, varn2->name }) != ProcStore.end() && ProcStore[{varn2->vtype, varn2->name}].find(varn2->ind) != ProcStore[{varn2->vtype, varn2->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					if (varn2->vtype != 2) {
+						err_arr.push_back("The right value for identification can only be a procedure variabler");
+						Node* n11 = con(1, 0);
+						return n11;
+					}
+					int k = 0;
+					if (IdStore.find({ varn1->vtype, varn1->name }) != IdStore.end() && IdStore[{varn1->vtype, varn1->name}].find(varn1->ind) != IdStore[{varn1->vtype, varn1->name}].end()) {
+						varn1 = IdStore[{varn1->vtype, varn1->name}][varn1->ind];
+					}
+					if (IdStore.find({ varn2->vtype, varn2->name }) != IdStore.end() && IdStore[{varn2->vtype, varn2->name}].find(varn2->ind) != IdStore[{varn2->vtype, varn2->name}].end()) {
+						varn2 = IdStore[{varn2->vtype, varn2->name}][varn2->ind];
+					}
+					
+					for (int i = 0; i < varn1->id_1.size(); ++i) {
+						if (ProcStore[{(varn1->id_1[i])->vtype, (varn1->id_1[i])->name}][varn1->id_1[i]->ind] == ProcStore[{varn2->vtype, varn2->name}][varn2->ind]) {
+							varn1->id_1.erase(varn1->id_1.begin() + i);
+							++k;
+						}
+					}
+					for (int i = 0; i < varn2->id_2.size(); ++i) {
+						if (ProcStore[{(varn2->id_2[i])->vtype, (varn2->id_2[i])->name}][varn2->id_2[i]->ind] == ProcStore[{varn1->vtype, varn1->name}][varn1->ind]) {
+							varn2->id_2.erase(varn2->id_2.begin() + i);
+							++k;
+						}
+					}
+					Node* n11 = con(1, 0);
+					if (!k) {
+						n11 = con(0, 0);
+					}
+					return n11;
+				}
+			}
+			case '=': { Node* n = ex_find_er(p->children[0]);
+				Node* n2 = p->children[1];
+				if (n == nullptr) {
+					Node* n1 = con(1, 0);
+					return n1;
+				}
+				if (n->type == typeN) {
+					err_arr.push_back("Assigning a value to a np");
+					Node* n1 = con(1, 0);
+					return n1;
+				}
+				if (n->type == typeCon) {
+					err_arr.push_back("Assigning a value to a constant");
+					Node* n1 = con(1, 0);
+					return n1;
+				}
+				if (n->type == typeOpr) {
+					err_arr.push_back("Operation cannot be an lvalue");
+					Node* n11 = con(1, 0);
+					return n11;
+				}
+				VarNode* varn1 = dynamic_cast<VarNode*>(n);
+				if (find_var(varn1)) {
+					err_arr.push_back("A variable with this name already exists");
+				}
+				if (n2 == nullptr) {
+					Node* n1 = con(1, 0);
+					return n1;
+				}
+				if (n2->type == typeN) {
+					err_arr.push_back("Assigning a np");
+					Node* n1 = con(1, 0);
+					return n1;
+				}
+				if (varn1->vtype == 2) {
+					ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = n2;
+					push_Varlist(varn1);
+					if (n2->type == typeOpr) {
+						OprNode* oprn = dynamic_cast<OprNode*>(n2);
+						if (oprn->oper == ':' || oprn->oper == ';') {
+							n2 = building_var_left(p->children[1], 0);
+							VarNode* varn2 = dynamic_cast<VarNode*>(n2);
+							if (varn1->vtype == 1 && varn2->vtype == 2) {
+								err_arr.push_back("Non procedural variable cannot be assigned a procedural variable");
+							}
+							if (varn2->vtype == 2) {
+								ProcStore[{varn1->vtype, varn1->name}][varn1->ind] = ProcStore[{varn2->vtype, varn2->name}][varn2->ind];
+								go_proc_er(varn2);
+							}
+						} 
+					}
+				}
+				else {
+					n2 = ex_find_er(p->children[1]);
+					if (n2->type == typeCon) {
+						ConNode* conn = dynamic_cast<ConNode*>(n2);
+						VarStore[{varn1->vtype, varn1->name}][varn1->ind] = conn->value;
+						push_Varlist(varn1);
+					}
+					if (n2->type == typeId) {
+						VarNode* varn2 = dynamic_cast<VarNode*>(n2);
+						VarStore[{varn1->vtype, varn1->name}][varn1->ind] = VarStore[{varn2->vtype, varn2->name}][varn2->ind];
+						push_Varlist(varn1);
+						go_proc_er(varn2);
+					}
+					if (n2->type == typeOpr) {
+						err_arr.push_back("A statement cannot be assigned to a non-procedural variable");
+						Node* n1 = con(1, 0);
+						return n1;
+					}
+				}
+				Node* n1 = con(1, 0);
+				return n1;
+			}
+			case INC: { Node* n = ex_find_er(p->children[0]);
+				if (n->type != typeId) {
+					err_arr.push_back("Incrementing a constant");
+					return n;
+				}
+				VarNode* varn = dynamic_cast<VarNode*> (n);
+				if (varn->vtype != 1) {
+					err_arr.push_back("Incrementing a non-integer variable");
+				}
+				if (!(VarStore.find({ varn->vtype, varn->name }) != VarStore.end() && VarStore[{varn->vtype, varn->name}].find(varn->ind) != VarStore[{varn->vtype, varn->name}].end())) {
+					err_arr.push_back("Uninitialized memory access");
+				}
+				go_proc_er(varn);
+				//inc
+				return varn;
+			}
+			case DEC: { Node* n = ex_find_er(p->children[0]);
+				if (n->type != typeId) {
+					err_arr.push_back("Decrementing a constant");
+					return n;
+				}
+				VarNode* varn = dynamic_cast<VarNode*> (n);
+				if (varn->vtype != 1) {
+					err_arr.push_back("Decrementing a non-integer variable");
+				}
+				if (!(VarStore.find({ varn->vtype, varn->name }) != VarStore.end() && VarStore[{varn->vtype, varn->name}].find(varn->ind) != VarStore[{varn->vtype, varn->name}].end())) {
+					err_arr.push_back("Uninitialized memory access");
+				}
+				go_proc_er(varn);
+				return varn;
+			}
+			case EQ: {Node* n1 = ex_find_er(p->children[0]);
+				Node* n2 = ex_find_er(p->children[1]);
+				if (n1->type == typeId) {
+					VarNode* varn1 = dynamic_cast<VarNode*> (n1);
+					if (!(VarStore.find({ varn1->vtype, varn1->name }) != VarStore.end() && VarStore[{varn1->vtype, varn1->name}].find(varn1->ind) != VarStore[{varn1->vtype, varn1->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					if (varn1->vtype == 2 && n2->type != typeN) {
+						err_arr.push_back("A procedure can only be compared with a null operator (np)");
+					}
+					go_proc_er(varn1);
+					if (n2->type == typeId) {
+						VarNode* varn2 = dynamic_cast<VarNode*> (n2);
+						if (varn1->vtype != varn2->vtype) {
+							err_arr.push_back("Comparison of variables of different types");
+						}
+						if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
+							err_arr.push_back("Uninitialized memory access");
+						}
+						go_proc_er(varn2);
+					}
+					if (n2->type == typeCon) {
+						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
+						if (varn1->vtype != conn2->ctype) {
+							err_arr.push_back("Comparison of variables of different types");
+						}
+					}
+				}
+				if (n1->type == typeCon) {
+					ConNode* conn1 = dynamic_cast<ConNode*> (n1);
+					if (n2->type == typeId) {
+						VarNode* varn2 = dynamic_cast<VarNode*> (n2);
+						if (conn1->ctype != varn2->vtype) {
+							err_arr.push_back("Comparison of variables of different types");
+						}
+						if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
+							err_arr.push_back("Uninitialized memory access");
+						}
+						go_proc_er(varn2);
+					}
+					if (n2->type == typeCon) {
+						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
+						if (conn1->ctype != conn2->ctype) {
+							err_arr.push_back("Comparison of variables of different types");
+						}
+					}
+				}
+				Node* n12 = con(1, 0);
+				return n12;
+			}
+			case PARR: {Node* n1 = ex_find_er(p->children[0]);
+				Node* n2 = ex_find_er(p->children[1]);
+				if (n1->type == typeId) {
+					VarNode* varn1 = dynamic_cast<VarNode*> (n1);
+					if (!(VarStore.find({ varn1->vtype, varn1->name }) != VarStore.end() && VarStore[{varn1->vtype, varn1->name}].find(varn1->ind) != VarStore[{varn1->vtype, varn1->name}].end())) {
+						err_arr.push_back("Uninitialized memory access");
+					}
+					go_proc_er(varn1);
+					if (n2->type == typeId) {
+						VarNode* varn2 = dynamic_cast<VarNode*> (n2);
+						if (varn1->vtype || varn2->vtype) {
+							err_arr.push_back("Applying a logical operation to a variable of a non-logical type");
+						}
+						if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
+							err_arr.push_back("Uninitialized memory access");
+						}
+						go_proc_er(varn2);
+					}
+					if (n2->type == typeCon) {
+						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
+						if (varn1->vtype || conn2->ctype) {
+							err_arr.push_back("Applying a logical operation to a variable of a non-logical type");
+						}
+					}
+				}
+				if (n1->type == typeCon) {
+					ConNode* conn1 = dynamic_cast<ConNode*> (n1);
+					if (n2->type == typeId) {
+						VarNode* varn2 = dynamic_cast<VarNode*> (n2);
+						if (conn1->ctype || varn2->vtype) {
+							err_arr.push_back("Applying a logical operation to a variable of a non-logical type");
+						}
+						if (!(VarStore.find({ varn2->vtype, varn2->name }) != VarStore.end() && VarStore[{varn2->vtype, varn2->name}].find(varn2->ind) != VarStore[{varn2->vtype, varn2->name}].end())) {
+							err_arr.push_back("Uninitialized memory access");
+						}
+						go_proc_er(varn2);
+					}
+					if (n2->type == typeCon) {
+						ConNode* conn2 = dynamic_cast<ConNode*> (n2);
+						if (conn1->ctype || conn2->ctype) {
+							err_arr.push_back("Applying a logical operation to a variable of a non-logical type");
+						}
+					}
+				}
+				Node* n11 = con(1, 0);
+				return n11;
+
+				}
+				case 'c': { Node* n = ex_find_er(p->children[0]);
+					if (n == nullptr) {
+						Node* n1 = con(0, 0);
+						return n1;
+					}
+					if (n->type == typeN) {
+						err_arr.push_back("np cannot be an identifier");
+						Node* n1 = con(0, 0);
+						return n1;
+					}
+					if (n->type == typeOpr) {
+						err_arr.push_back("Operation cannot be an rvalue and identifier");
+						Node* n11 = con(0, 0);
+						return n11;
+					}
+					if (n->type == typeCon) {
+						ConNode* conn1 = dynamic_cast<ConNode*> (n);
+						return conn1;
+					}
+					VarNode* varn = dynamic_cast<VarNode*>(n);
+					go_proc_er(varn);
+					return varn;
+				}
+					 /*case GOTO: {VarNode* varn = dynamic_cast<VarNode*>(p->children[0]); //////////////////////////////////////////////РАЗОБРАТЬСЯ С МЕТКАМИ
+						 if (!addr[varn->i])
+							 printf("Identificator '%c' is not detected: - ignore goto!\n", varn->name);
+						 else
+							 lbll = varn->i;
+						 return 0;}*/
+			}
+		}
+		}
+	}
+	else
+	{
+		switch (p1->type) {
+		case typeCon: {return nullptr; }
+		case typeId: {return nullptr; }
+		case typeOpr: {
+			OprNode* p = dynamic_cast<OprNode*>(p1);
+			switch (p->oper) {
+			case 1: {
+				ex_find_er(p->children[1]);
+				ex_find_er(p->children[0]);
+				return nullptr; }
+			case '\n': {ex_find_er(p->children[0]); return ex_find_er(p->children[1]); }
+			default: return nullptr;
+			}
+		}
+		}
+		return nullptr;
+	}
+}
+int exec_find_er(Node* p)
+{
+	do
+	{
+		ex_find_er(p);
+	} while (lbll);
+}
+
+
+
+
+
+Node* building_var_left(Node* p, int level) {
+	int res;
+	if (p->type == typeOpr) {
+		if (p->children[0]->type == typeId) {
+			VarNode* varn = dynamic_cast<VarNode*>(p->children[0]);
+			int index = building_var_right(p->children[1], level + 1);
+			varn->ind.push_back(index);
+			return p->children[0];
+		}
+		else if (p->children[0]->type == typeOpr) {
+			Node* p1 = building_var_left(p->children[0], level + 1);
+			int index = building_var_right(p->children[1], level + 1);
+			VarNode* varn = dynamic_cast<VarNode*>(p1);
+			varn->ind.push_back(index);
+			return p1;
+		}
+		else if (p->children[0]->type == typeCon) {
+			err_arr.push_back("The array name must be a variable");
+		}
+		else {
+			err_arr.push_back("The array name must be a variable");
+		}
+	}
+	else if (p->type == typeId) {
+		VarNode* varn = dynamic_cast<VarNode*>(p);
+		return varn;
+	}
+	else if (p->type == typeCon) {
+		ConNode* conn = dynamic_cast<ConNode*>(p);
+		return conn;
+	}
+	else if (p->type == typeN) {
+		Null* nn = dynamic_cast<Null*>(p);
+		return nn;
+	}
+	Null* nn = dynamic_cast<Null*>(p);
+	return nn;
+}
+
+int building_var_right(Node* p, int level) { //return conn
+	if (p->type == typeOpr) {
+		if (p->children[0]->type == typeId) {
+			VarNode* varn = dynamic_cast<VarNode*>(p->children[0]);
+			int p1 = building_var_right(p->children[1], level + 1);
+			varn->ind.push_back(p1);
+			return VarStore[{varn->vtype, varn->name}][varn->ind];
+		}
+		else if (p->children[0]->type == typeOpr) {
+			Node* p1 = building_var_left(p->children[0], 0); //typeId
+			int index = building_var_right(p->children[1], level + 1);
+			VarNode* varn = dynamic_cast<VarNode*>(p1);
+			varn->ind.push_back(index);
+			return VarStore[{varn->vtype, varn->name}][varn->ind];
+		}
+		else if (p->children[0]->type == typeCon) {
+			err_arr.push_back("The array name must be a variable");
+		}
+		else {
+			err_arr.push_back("The array name must be a variable");
+		}
+
+	}
+	else if (p->type == typeId) {
+		VarNode* varn = dynamic_cast<VarNode*>(p);
+		if (varn->vtype != 1 && level) {
+			err_arr.push_back("Indexing with a non-integer variable");
+		}
+		return VarStore[{varn->vtype, varn->name}][varn->ind];
+	}
+	else if (p->type == typeCon) {
+		ConNode* conn = dynamic_cast<ConNode*>(p);
+		if (conn->ctype != 1 && level) {
+			err_arr.push_back("Indexing with a non-integer variable");
+		}
+		return conn->value;
+	}
+	else {
+		Null* nn = dynamic_cast<Null*>(p);
+		err_arr.push_back("Indexing with a non-integer variable");
+		return 0;
+	}
+	return 0;
+}
+
+
 
 void freeNode(Node *p) {
 	int i;
@@ -176,8 +856,17 @@ void yyerror(char *s) {
 	fprintf(stdout, "%s\n", s);
 }
 
+void init_VL(){
+	for (int i = 0; i<6; ++i){
+		std::vector<int> a;
+		a.push_back(-1);
+		Varlist.push_back(a);
+	}
+}
+
 int main(void) {
 	yyin = fopen ("./test.txt", "r");
+	init_VL();
 	yyparse();
 	fclose (yyin);
 	return 0;

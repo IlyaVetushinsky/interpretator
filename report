@@ -12,9 +12,7 @@
    TP
 
 
-Состояние 21 конфликты: 1 сдвига/вывода
-Состояние 32 конфликты: 1 сдвига/вывода
-Состояние 61 конфликты: 1 сдвига/вывода
+Состояние 57 конфликты: 1 сдвига/вывода
 
 
 Грамматика
@@ -31,8 +29,8 @@
     6     | lexpr '\n'
     7     | PRINT nexpr '\n'
     8     | PRINT lexpr '\n'
-    9     | nvariable AS nexpr '\n'
-   10     | lvariable AS lexpr '\n'
+    9     | nexpr AS nexpr '\n'
+   10     | lexpr AS lexpr '\n'
    11     | '(' lexpr ')' stmt
    12     | '{' stmt_list '}'
    13     | LABEL stmt
@@ -43,55 +41,51 @@
    17          | stmt_list stmt
 
    18 nexpr: integ
-   19      | nvariable
-   20      | '(' nexpr ')'
+   19      | nexpr EQ nexpr
+   20      | INTVAR
+   21      | INC nexpr
+   22      | DEC nexpr
+   23      | INTVAR ':' nexpr
+   24      | nexpr ';' nexpr
+   25      | '(' nexpr ')'
 
-   21 nvariable: INTVAR
-   22          | narr
-   23          | INC nvariable
-   24          | DEC nvariable
-   25          | nvariable EQ integ
+   26 integ: INTEGER
+   27      | '-' integ
 
-   26 narr: INTVAR ':' nexpr
-   27     | narr ';' nexpr
+   28 lexpr: bool
+   29      | lvariable
+   30      | PARR lexpr lexpr
+   31      | lvariable EQ bool
+   32      | '(' lexpr ')'
 
-   28 integ: INTEGER
-   29      | '-' integ
+   33 lvariable: LOGVAR
+   34          | larr
 
-   30 lexpr: bool
-   31      | lvariable
-   32      | PARR lexpr lexpr
-   33      | '(' lexpr ')'
+   35 larr: LOGVAR ':' nexpr
+   36     | larr ';' nexpr
 
-   34 lvariable: LOGVAR
-   35          | larr
-   36          | lvariable EQ bool
-
-   37 larr: LOGVAR ':' nexpr
-   38     | larr ';' nexpr
-
-   39 bool: LOGIC
+   37 bool: LOGIC
 
 
 Терминальные символы с правилами, в которых они появляются
 
 $end (0) 0
 '\n' (10) 4 5 6 7 8 9 10 14 15
-'(' (40) 11 20 33
-')' (41) 11 20 33
-'-' (45) 29
-':' (58) 26 37
-';' (59) 27 38
+'(' (40) 11 25 32
+')' (41) 11 25 32
+'-' (45) 27
+':' (58) 23 35
+';' (59) 24 36
 '[' (91) 14 15
 ']' (93) 14 15
 '{' (123) 12
 '}' (125) 12
 error (256)
 END (258)
-INTEGER (259) 28
-LOGIC (260) 39
-LOGVAR (261) 34 37
-INTVAR (262) 21 26
+INTEGER (259) 26
+LOGIC (260) 37
+LOGVAR (261) 33 35
+INTVAR (262) 20 23
 LABEL (263) 13 14 15
 PROC (264)
 WHILE (265)
@@ -105,10 +99,10 @@ MR (272)
 ML (273)
 TP (274)
 AS (275) 9 10
-EQ (276) 25 36
-INC (277) 23
-DEC (278) 24
-PARR (279) 32
+EQ (276) 19 31
+INC (277) 21
+DEC (278) 22
+PARR (279) 30
 UMINUS (280)
 
 
@@ -126,21 +120,19 @@ stmt (39)
 stmt_list (40)
     налево: 16 17, направо: 12 17
 nexpr (41)
-    налево: 18 19 20, направо: 5 7 9 20 26 27 37 38
-nvariable (42)
-    налево: 21 22 23 24 25, направо: 9 19 23 24 25
-narr (43)
-    налево: 26 27, направо: 22 27
-integ (44)
-    налево: 28 29, направо: 18 25 29
-lexpr (45)
-    налево: 30 31 32 33, направо: 6 8 10 11 14 15 32 33
-lvariable (46)
-    налево: 34 35 36, направо: 10 31 36
-larr (47)
-    налево: 37 38, направо: 35 38
-bool (48)
-    налево: 39, направо: 30 36
+    налево: 18 19 20 21 22 23 24 25, направо: 5 7 9 19
+    21 22 23 24 25 35 36
+integ (42)
+    налево: 26 27, направо: 18 27
+lexpr (43)
+    налево: 28 29 30 31 32, направо: 6 8 10 11 14 15 30
+    32
+lvariable (44)
+    налево: 33 34, направо: 29 31
+larr (45)
+    налево: 35 36, направо: 34 36
+bool (46)
+    налево: 37, направо: 28 31
 
 
 State 0
@@ -172,35 +164,33 @@ State 2
     6     | . lexpr '\n'
     7     | . PRINT nexpr '\n'
     8     | . PRINT lexpr '\n'
-    9     | . nvariable AS nexpr '\n'
-   10     | . lvariable AS lexpr '\n'
+    9     | . nexpr AS nexpr '\n'
+   10     | . lexpr AS lexpr '\n'
    11     | . '(' lexpr ')' stmt
    12     | . '{' stmt_list '}'
    13     | . LABEL stmt
    14     | . '[' lexpr ']' LABEL '\n'
    15     | . '[' lexpr ']' PLS LABEL '\n'
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -221,13 +211,11 @@ State 2
 
     stmt       переход в состояние 18
     nexpr      переход в состояние 19
-    nvariable  переход в состояние 20
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 23
-    lvariable  переход в состояние 24
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    integ      переход в состояние 20
+    lexpr      переход в состояние 21
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 3
@@ -239,36 +227,36 @@ State 3
 
 State 4
 
-   28 integ: INTEGER .
+   26 integ: INTEGER .
 
-    $default  вывод с использованием правила 28 (integ)
+    $default  вывод с использованием правила 26 (integ)
 
 
 State 5
 
-   39 bool: LOGIC .
+   37 bool: LOGIC .
 
-    $default  вывод с использованием правила 39 (bool)
+    $default  вывод с использованием правила 37 (bool)
 
 
 State 6
 
-   34 lvariable: LOGVAR .  [LOGIC, LOGVAR, AS, EQ, PARR, '\n', '(', ')', ']']
-   37 larr: LOGVAR . ':' nexpr
+   33 lvariable: LOGVAR .  [LOGIC, LOGVAR, AS, EQ, PARR, '\n', '(', ')', ']']
+   35 larr: LOGVAR . ':' nexpr
 
-    ':'  сдвиг, и переход в состояние 27
+    ':'  сдвиг, и переход в состояние 25
 
-    $default  вывод с использованием правила 34 (lvariable)
+    $default  вывод с использованием правила 33 (lvariable)
 
 
 State 7
 
-   21 nvariable: INTVAR .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
-   26 narr: INTVAR . ':' nexpr
+   20 nexpr: INTVAR .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
+   23      | INTVAR . ':' nexpr
 
-    ':'  сдвиг, и переход в состояние 28
+    ':'  сдвиг, и переход в состояние 26
 
-    $default  вывод с использованием правила 21 (nvariable)
+    $default  вывод с использованием правила 20 (nexpr)
 
 
 State 8
@@ -278,8 +266,8 @@ State 8
     6     | . lexpr '\n'
     7     | . PRINT nexpr '\n'
     8     | . PRINT lexpr '\n'
-    9     | . nvariable AS nexpr '\n'
-   10     | . lvariable AS lexpr '\n'
+    9     | . nexpr AS nexpr '\n'
+   10     | . lexpr AS lexpr '\n'
    11     | . '(' lexpr ')' stmt
    12     | . '{' stmt_list '}'
    13     | . LABEL stmt
@@ -287,27 +275,25 @@ State 8
    14     | . '[' lexpr ']' LABEL '\n'
    15     | . '[' lexpr ']' PLS LABEL '\n'
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -324,15 +310,13 @@ State 8
     '['      сдвиг, и переход в состояние 16
     '-'      сдвиг, и переход в состояние 17
 
-    stmt       переход в состояние 29
+    stmt       переход в состояние 27
     nexpr      переход в состояние 19
-    nvariable  переход в состояние 20
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 23
-    lvariable  переход в состояние 24
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    integ      переход в состояние 20
+    lexpr      переход в состояние 21
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 9
@@ -340,27 +324,25 @@ State 9
     7 stmt: PRINT . nexpr '\n'
     8     | PRINT . lexpr '\n'
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -369,80 +351,90 @@ State 9
     INC      сдвиг, и переход в состояние 10
     DEC      сдвиг, и переход в состояние 11
     PARR     сдвиг, и переход в состояние 12
-    '('      сдвиг, и переход в состояние 30
+    '('      сдвиг, и переход в состояние 28
     '-'      сдвиг, и переход в состояние 17
 
-    nexpr      переход в состояние 31
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 33
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    nexpr      переход в состояние 29
+    integ      переход в состояние 20
+    lexpr      переход в состояние 30
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 10
 
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   23          | INC . nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   21      | INC . nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
 
-    INTVAR  сдвиг, и переход в состояние 7
-    INC     сдвиг, и переход в состояние 10
-    DEC     сдвиг, и переход в состояние 11
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
 
-    nvariable  переход в состояние 35
-    narr       переход в состояние 21
+    nexpr  переход в состояние 32
+    integ  переход в состояние 20
 
 
 State 11
 
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   24          | DEC . nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   22      | DEC . nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
 
-    INTVAR  сдвиг, и переход в состояние 7
-    INC     сдвиг, и переход в состояние 10
-    DEC     сдвиг, и переход в состояние 11
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
 
-    nvariable  переход в состояние 36
-    narr       переход в состояние 21
+    nexpr  переход в состояние 33
+    integ  переход в состояние 20
 
 
 State 12
 
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   32      | PARR . lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   30      | PARR . lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     LOGIC   сдвиг, и переход в состояние 5
     LOGVAR  сдвиг, и переход в состояние 6
     PARR    сдвиг, и переход в состояние 12
-    '('     сдвиг, и переход в состояние 37
+    '('     сдвиг, и переход в состояние 34
 
-    lexpr      переход в состояние 38
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    lexpr      переход в состояние 35
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 13
@@ -456,29 +448,27 @@ State 14
 
    11 stmt: '(' . lexpr ')' stmt
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   20      | '(' . nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   33      | '(' . lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   25      | '(' . nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   32      | '(' . lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -487,17 +477,15 @@ State 14
     INC      сдвиг, и переход в состояние 10
     DEC      сдвиг, и переход в состояние 11
     PARR     сдвиг, и переход в состояние 12
-    '('      сдвиг, и переход в состояние 30
+    '('      сдвиг, и переход в состояние 28
     '-'      сдвиг, и переход в состояние 17
 
-    nexpr      переход в состояние 39
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 40
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    nexpr      переход в состояние 36
+    integ      переход в состояние 20
+    lexpr      переход в состояние 37
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 15
@@ -507,8 +495,8 @@ State 15
     6     | . lexpr '\n'
     7     | . PRINT nexpr '\n'
     8     | . PRINT lexpr '\n'
-    9     | . nvariable AS nexpr '\n'
-   10     | . lvariable AS lexpr '\n'
+    9     | . nexpr AS nexpr '\n'
+   10     | . lexpr AS lexpr '\n'
    11     | . '(' lexpr ')' stmt
    12     | . '{' stmt_list '}'
    12     | '{' . stmt_list '}'
@@ -518,27 +506,25 @@ State 15
    16 stmt_list: . stmt
    17          | . stmt_list stmt
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -555,54 +541,52 @@ State 15
     '['      сдвиг, и переход в состояние 16
     '-'      сдвиг, и переход в состояние 17
 
-    stmt       переход в состояние 41
-    stmt_list  переход в состояние 42
+    stmt       переход в состояние 38
+    stmt_list  переход в состояние 39
     nexpr      переход в состояние 19
-    nvariable  переход в состояние 20
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 23
-    lvariable  переход в состояние 24
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    integ      переход в состояние 20
+    lexpr      переход в состояние 21
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 16
 
    14 stmt: '[' . lexpr ']' LABEL '\n'
    15     | '[' . lexpr ']' PLS LABEL '\n'
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     LOGIC   сдвиг, и переход в состояние 5
     LOGVAR  сдвиг, и переход в состояние 6
     PARR    сдвиг, и переход в состояние 12
-    '('     сдвиг, и переход в состояние 37
+    '('     сдвиг, и переход в состояние 34
 
-    lexpr      переход в состояние 43
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    lexpr      переход в состояние 40
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 17
 
-   28 integ: . INTEGER
-   29      | . '-' integ
-   29      | '-' . integ
+   26 integ: . INTEGER
+   27      | . '-' integ
+   27      | '-' . integ
 
     INTEGER  сдвиг, и переход в состояние 4
     '-'      сдвиг, и переход в состояние 17
 
-    integ  переход в состояние 44
+    integ  переход в состояние 41
 
 
 State 18
@@ -615,167 +599,140 @@ State 18
 State 19
 
     5 stmt: nexpr . '\n'
+    9     | nexpr . AS nexpr '\n'
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
 
+    AS    сдвиг, и переход в состояние 42
+    ';'   сдвиг, и переход в состояние 43
+    EQ    сдвиг, и переход в состояние 44
     '\n'  сдвиг, и переход в состояние 45
 
 
 State 20
-
-    9 stmt: nvariable . AS nexpr '\n'
-   19 nexpr: nvariable .  ['\n']
-   25 nvariable: nvariable . EQ integ
-
-    AS  сдвиг, и переход в состояние 46
-    EQ  сдвиг, и переход в состояние 47
-
-    $default  вывод с использованием правила 19 (nexpr)
-
-
-State 21
-
-   22 nvariable: narr .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
-   27 narr: narr . ';' nexpr
-
-    ';'  сдвиг, и переход в состояние 48
-
-    ';'       [вывод с использованием правила 22 (nvariable)]
-    $default  вывод с использованием правила 22 (nvariable)
-
-
-State 22
 
    18 nexpr: integ .
 
     $default  вывод с использованием правила 18 (nexpr)
 
 
-State 23
+State 21
 
     6 stmt: lexpr . '\n'
+   10     | lexpr . AS lexpr '\n'
 
-    '\n'  сдвиг, и переход в состояние 49
+    AS    сдвиг, и переход в состояние 46
+    '\n'  сдвиг, и переход в состояние 47
+
+
+State 22
+
+   29 lexpr: lvariable .  [LOGIC, LOGVAR, AS, PARR, '\n', '(', ')', ']']
+   31      | lvariable . EQ bool
+
+    EQ  сдвиг, и переход в состояние 48
+
+    $default  вывод с использованием правила 29 (lexpr)
+
+
+State 23
+
+   34 lvariable: larr .  [LOGIC, LOGVAR, AS, EQ, PARR, '\n', '(', ')', ']']
+   36 larr: larr . ';' nexpr
+
+    ';'  сдвиг, и переход в состояние 49
+
+    $default  вывод с использованием правила 34 (lvariable)
 
 
 State 24
 
-   10 stmt: lvariable . AS lexpr '\n'
-   31 lexpr: lvariable .  ['\n']
-   36 lvariable: lvariable . EQ bool
+   28 lexpr: bool .
 
-    AS  сдвиг, и переход в состояние 50
-    EQ  сдвиг, и переход в состояние 51
-
-    $default  вывод с использованием правила 31 (lexpr)
+    $default  вывод с использованием правила 28 (lexpr)
 
 
 State 25
 
-   35 lvariable: larr .  [LOGIC, LOGVAR, AS, EQ, PARR, '\n', '(', ')', ']']
-   38 larr: larr . ';' nexpr
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   35 larr: LOGVAR ':' . nexpr
 
-    ';'  сдвиг, и переход в состояние 52
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
 
-    $default  вывод с использованием правила 35 (lvariable)
+    nexpr  переход в состояние 50
+    integ  переход в состояние 20
 
 
 State 26
 
-   30 lexpr: bool .
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   23      | INTVAR ':' . nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
 
-    $default  вывод с использованием правила 30 (lexpr)
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 51
+    integ  переход в состояние 20
 
 
 State 27
-
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   37 larr: LOGVAR ':' . nexpr
-
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
-
-    nexpr      переход в состояние 54
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-
-
-State 28
-
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   26     | INTVAR ':' . nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
-
-    nexpr      переход в состояние 55
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-
-
-State 29
 
    13 stmt: LABEL stmt .
 
     $default  вывод с использованием правила 13 (stmt)
 
 
-State 30
+State 28
 
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   20      | '(' . nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   33      | '(' . lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   25      | '(' . nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   32      | '(' . lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -784,155 +741,169 @@ State 30
     INC      сдвиг, и переход в состояние 10
     DEC      сдвиг, и переход в состояние 11
     PARR     сдвиг, и переход в состояние 12
-    '('      сдвиг, и переход в состояние 30
+    '('      сдвиг, и переход в состояние 28
     '-'      сдвиг, и переход в состояние 17
 
-    nexpr      переход в состояние 39
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 56
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    nexpr      переход в состояние 36
+    integ      переход в состояние 20
+    lexpr      переход в состояние 52
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
+
+
+State 29
+
+    7 stmt: PRINT nexpr . '\n'
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+
+    ';'   сдвиг, и переход в состояние 43
+    EQ    сдвиг, и переход в состояние 44
+    '\n'  сдвиг, и переход в состояние 53
+
+
+State 30
+
+    8 stmt: PRINT lexpr . '\n'
+
+    '\n'  сдвиг, и переход в состояние 54
 
 
 State 31
 
-    7 stmt: PRINT nexpr . '\n'
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   25      | '(' . nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
 
-    '\n'  сдвиг, и переход в состояние 57
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 36
+    integ  переход в состояние 20
 
 
 State 32
 
-   19 nexpr: nvariable .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
-   25 nvariable: nvariable . EQ integ
+   19 nexpr: nexpr . EQ nexpr
+   21      | INC nexpr .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
+   24      | nexpr . ';' nexpr
 
-    EQ  сдвиг, и переход в состояние 47
+    $default  вывод с использованием правила 21 (nexpr)
 
-    EQ        [вывод с использованием правила 19 (nexpr)]
-    $default  вывод с использованием правила 19 (nexpr)
+    Конфликт между правилом 21 и лексемой ';' разрешен выводом (';' < INC).
+    Конфликт между правилом 21 и лексемой EQ разрешен выводом (EQ < INC).
 
 
 State 33
 
-    8 stmt: PRINT lexpr . '\n'
+   19 nexpr: nexpr . EQ nexpr
+   22      | DEC nexpr .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
+   24      | nexpr . ';' nexpr
 
-    '\n'  сдвиг, и переход в состояние 58
+    $default  вывод с использованием правила 22 (nexpr)
+
+    Конфликт между правилом 22 и лексемой ';' разрешен выводом (';' < DEC).
+    Конфликт между правилом 22 и лексемой EQ разрешен выводом (EQ < DEC).
 
 
 State 34
 
-   31 lexpr: lvariable .  [LOGIC, LOGVAR, PARR, '\n', '(', ')', ']']
-   36 lvariable: lvariable . EQ bool
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   32      | '(' . lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
-    EQ  сдвиг, и переход в состояние 51
+    LOGIC   сдвиг, и переход в состояние 5
+    LOGVAR  сдвиг, и переход в состояние 6
+    PARR    сдвиг, и переход в состояние 12
+    '('     сдвиг, и переход в состояние 34
 
-    $default  вывод с использованием правила 31 (lexpr)
+    lexpr      переход в состояние 52
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 35
 
-   23 nvariable: INC nvariable .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
-   25          | nvariable . EQ integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   30      | PARR lexpr . lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
-    $default  вывод с использованием правила 23 (nvariable)
+    LOGIC   сдвиг, и переход в состояние 5
+    LOGVAR  сдвиг, и переход в состояние 6
+    PARR    сдвиг, и переход в состояние 12
+    '('     сдвиг, и переход в состояние 34
 
-    Конфликт между правилом 23 и лексемой EQ разрешен выводом (EQ < INC).
+    lexpr      переход в состояние 55
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 36
 
-   24 nvariable: DEC nvariable .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
-   25          | nvariable . EQ integ
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+   25      | '(' nexpr . ')'
 
-    $default  вывод с использованием правила 24 (nvariable)
-
-    Конфликт между правилом 24 и лексемой EQ разрешен выводом (EQ < DEC).
+    ';'  сдвиг, и переход в состояние 43
+    EQ   сдвиг, и переход в состояние 44
+    ')'  сдвиг, и переход в состояние 56
 
 
 State 37
 
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   33      | '(' . lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   11 stmt: '(' lexpr . ')' stmt
+   32 lexpr: '(' lexpr . ')'
 
-    LOGIC   сдвиг, и переход в состояние 5
-    LOGVAR  сдвиг, и переход в состояние 6
-    PARR    сдвиг, и переход в состояние 12
-    '('     сдвиг, и переход в состояние 37
-
-    lexpr      переход в состояние 56
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    ')'  сдвиг, и переход в состояние 57
 
 
 State 38
-
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   32      | PARR lexpr . lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
-
-    LOGIC   сдвиг, и переход в состояние 5
-    LOGVAR  сдвиг, и переход в состояние 6
-    PARR    сдвиг, и переход в состояние 12
-    '('     сдвиг, и переход в состояние 37
-
-    lexpr      переход в состояние 59
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
-
-
-State 39
-
-   20 nexpr: '(' nexpr . ')'
-
-    ')'  сдвиг, и переход в состояние 60
-
-
-State 40
-
-   11 stmt: '(' lexpr . ')' stmt
-   33 lexpr: '(' lexpr . ')'
-
-    ')'  сдвиг, и переход в состояние 61
-
-
-State 41
 
    16 stmt_list: stmt .
 
     $default  вывод с использованием правила 16 (stmt_list)
 
 
-State 42
+State 39
 
     4 stmt: . '\n'
     5     | . nexpr '\n'
     6     | . lexpr '\n'
     7     | . PRINT nexpr '\n'
     8     | . PRINT lexpr '\n'
-    9     | . nvariable AS nexpr '\n'
-   10     | . lvariable AS lexpr '\n'
+    9     | . nexpr AS nexpr '\n'
+   10     | . lexpr AS lexpr '\n'
    11     | . '(' lexpr ')' stmt
    12     | . '{' stmt_list '}'
    12     | '{' stmt_list . '}'
@@ -941,27 +912,25 @@ State 42
    15     | . '[' lexpr ']' PLS LABEL '\n'
    17 stmt_list: stmt_list . stmt
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -975,34 +944,107 @@ State 42
     '\n'     сдвиг, и переход в состояние 13
     '('      сдвиг, и переход в состояние 14
     '{'      сдвиг, и переход в состояние 15
-    '}'      сдвиг, и переход в состояние 62
+    '}'      сдвиг, и переход в состояние 58
     '['      сдвиг, и переход в состояние 16
     '-'      сдвиг, и переход в состояние 17
 
-    stmt       переход в состояние 63
+    stmt       переход в состояние 59
     nexpr      переход в состояние 19
-    nvariable  переход в состояние 20
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 23
-    lvariable  переход в состояние 24
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    integ      переход в состояние 20
+    lexpr      переход в состояние 21
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
-State 43
+State 40
 
    14 stmt: '[' lexpr . ']' LABEL '\n'
    15     | '[' lexpr . ']' PLS LABEL '\n'
 
-    ']'  сдвиг, и переход в состояние 64
+    ']'  сдвиг, и переход в состояние 60
+
+
+State 41
+
+   27 integ: '-' integ .
+
+    $default  вывод с использованием правила 27 (integ)
+
+
+State 42
+
+    9 stmt: nexpr AS . nexpr '\n'
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 61
+    integ  переход в состояние 20
+
+
+State 43
+
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   24      | nexpr ';' . nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 62
+    integ  переход в состояние 20
 
 
 State 44
 
-   29 integ: '-' integ .
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   19      | nexpr EQ . nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
 
-    $default  вывод с использованием правила 29 (integ)
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 63
+    integ  переход в состояние 20
 
 
 State 45
@@ -1014,232 +1056,143 @@ State 45
 
 State 46
 
-    9 stmt: nvariable AS . nexpr '\n'
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
+   10 stmt: lexpr AS . lexpr '\n'
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
+    LOGIC   сдвиг, и переход в состояние 5
+    LOGVAR  сдвиг, и переход в состояние 6
+    PARR    сдвиг, и переход в состояние 12
+    '('     сдвиг, и переход в состояние 34
 
-    nexpr      переход в состояние 65
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
+    lexpr      переход в состояние 64
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
 State 47
-
-   25 nvariable: nvariable EQ . integ
-   28 integ: . INTEGER
-   29      | . '-' integ
-
-    INTEGER  сдвиг, и переход в состояние 4
-    '-'      сдвиг, и переход в состояние 17
-
-    integ  переход в состояние 66
-
-
-State 48
-
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   27     | narr ';' . nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
-
-    nexpr      переход в состояние 67
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-
-
-State 49
 
     6 stmt: lexpr '\n' .
 
     $default  вывод с использованием правила 6 (stmt)
 
 
+State 48
+
+   31 lexpr: lvariable EQ . bool
+   37 bool: . LOGIC
+
+    LOGIC  сдвиг, и переход в состояние 5
+
+    bool  переход в состояние 65
+
+
+State 49
+
+   18 nexpr: . integ
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   36 larr: larr ';' . nexpr
+
+    INTEGER  сдвиг, и переход в состояние 4
+    INTVAR   сдвиг, и переход в состояние 7
+    INC      сдвиг, и переход в состояние 10
+    DEC      сдвиг, и переход в состояние 11
+    '('      сдвиг, и переход в состояние 31
+    '-'      сдвиг, и переход в состояние 17
+
+    nexpr  переход в состояние 66
+    integ  переход в состояние 20
+
+
 State 50
 
-   10 stmt: lvariable AS . lexpr '\n'
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+   35 larr: LOGVAR ':' nexpr .  [LOGIC, LOGVAR, AS, ';', PARR, '\n', '(', ')', ']']
 
-    LOGIC   сдвиг, и переход в состояние 5
-    LOGVAR  сдвиг, и переход в состояние 6
-    PARR    сдвиг, и переход в состояние 12
-    '('     сдвиг, и переход в состояние 37
+    EQ  сдвиг, и переход в состояние 44
 
-    lexpr      переход в состояние 68
-    lvariable  переход в состояние 34
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    $default  вывод с использованием правила 35 (larr)
+
+    Конфликт между правилом 35 и лексемой ';' разрешен выводом (';' < ':').
+    Конфликт между правилом 35 и лексемой EQ разрешен сдвигом (':' < EQ).
 
 
 State 51
 
-   36 lvariable: lvariable EQ . bool
-   39 bool: . LOGIC
+   19 nexpr: nexpr . EQ nexpr
+   23      | INTVAR ':' nexpr .  [LOGIC, LOGVAR, AS, ';', PARR, '\n', '(', ')', ']']
+   24      | nexpr . ';' nexpr
 
-    LOGIC  сдвиг, и переход в состояние 5
+    EQ  сдвиг, и переход в состояние 44
 
-    bool  переход в состояние 69
+    $default  вывод с использованием правила 23 (nexpr)
+
+    Конфликт между правилом 23 и лексемой ';' разрешен выводом (';' < ':').
+    Конфликт между правилом 23 и лексемой EQ разрешен сдвигом (':' < EQ).
 
 
 State 52
 
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   38 larr: larr ';' . nexpr
+   32 lexpr: '(' lexpr . ')'
 
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
-
-    nexpr      переход в состояние 70
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
+    ')'  сдвиг, и переход в состояние 67
 
 
 State 53
-
-   18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   20      | '(' . nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-
-    INTEGER  сдвиг, и переход в состояние 4
-    INTVAR   сдвиг, и переход в состояние 7
-    INC      сдвиг, и переход в состояние 10
-    DEC      сдвиг, и переход в состояние 11
-    '('      сдвиг, и переход в состояние 53
-    '-'      сдвиг, и переход в состояние 17
-
-    nexpr      переход в состояние 39
-    nvariable  переход в состояние 32
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-
-
-State 54
-
-   37 larr: LOGVAR ':' nexpr .
-
-    $default  вывод с использованием правила 37 (larr)
-
-
-State 55
-
-   26 narr: INTVAR ':' nexpr .
-
-    $default  вывод с использованием правила 26 (narr)
-
-
-State 56
-
-   33 lexpr: '(' lexpr . ')'
-
-    ')'  сдвиг, и переход в состояние 71
-
-
-State 57
 
     7 stmt: PRINT nexpr '\n' .
 
     $default  вывод с использованием правила 7 (stmt)
 
 
-State 58
+State 54
 
     8 stmt: PRINT lexpr '\n' .
 
     $default  вывод с использованием правила 8 (stmt)
 
 
-State 59
+State 55
 
-   32 lexpr: PARR lexpr lexpr .
+   30 lexpr: PARR lexpr lexpr .
 
-    $default  вывод с использованием правила 32 (lexpr)
-
-
-State 60
-
-   20 nexpr: '(' nexpr ')' .
-
-    $default  вывод с использованием правила 20 (nexpr)
+    $default  вывод с использованием правила 30 (lexpr)
 
 
-State 61
+State 56
+
+   25 nexpr: '(' nexpr ')' .
+
+    $default  вывод с использованием правила 25 (nexpr)
+
+
+State 57
 
     4 stmt: . '\n'
     5     | . nexpr '\n'
     6     | . lexpr '\n'
     7     | . PRINT nexpr '\n'
     8     | . PRINT lexpr '\n'
-    9     | . nvariable AS nexpr '\n'
-   10     | . lvariable AS lexpr '\n'
+    9     | . nexpr AS nexpr '\n'
+   10     | . lexpr AS lexpr '\n'
    11     | . '(' lexpr ')' stmt
    11     | '(' lexpr ')' . stmt
    12     | . '{' stmt_list '}'
@@ -1247,28 +1200,26 @@ State 61
    14     | . '[' lexpr ']' LABEL '\n'
    15     | . '[' lexpr ']' PLS LABEL '\n'
    18 nexpr: . integ
-   19      | . nvariable
-   20      | . '(' nexpr ')'
-   21 nvariable: . INTVAR
-   22          | . narr
-   23          | . INC nvariable
-   24          | . DEC nvariable
-   25          | . nvariable EQ integ
-   26 narr: . INTVAR ':' nexpr
-   27     | . narr ';' nexpr
-   28 integ: . INTEGER
-   29      | . '-' integ
-   30 lexpr: . bool
-   31      | . lvariable
-   32      | . PARR lexpr lexpr
-   33      | . '(' lexpr ')'
-   33      | '(' lexpr ')' .  ['\n']
-   34 lvariable: . LOGVAR
-   35          | . larr
-   36          | . lvariable EQ bool
-   37 larr: . LOGVAR ':' nexpr
-   38     | . larr ';' nexpr
-   39 bool: . LOGIC
+   19      | . nexpr EQ nexpr
+   20      | . INTVAR
+   21      | . INC nexpr
+   22      | . DEC nexpr
+   23      | . INTVAR ':' nexpr
+   24      | . nexpr ';' nexpr
+   25      | . '(' nexpr ')'
+   26 integ: . INTEGER
+   27      | . '-' integ
+   28 lexpr: . bool
+   29      | . lvariable
+   30      | . PARR lexpr lexpr
+   31      | . lvariable EQ bool
+   32      | . '(' lexpr ')'
+   32      | '(' lexpr ')' .  [AS, '\n']
+   33 lvariable: . LOGVAR
+   34          | . larr
+   35 larr: . LOGVAR ':' nexpr
+   36     | . larr ';' nexpr
+   37 bool: . LOGIC
 
     INTEGER  сдвиг, и переход в состояние 4
     LOGIC    сдвиг, и переход в состояние 5
@@ -1285,141 +1236,163 @@ State 61
     '['      сдвиг, и переход в состояние 16
     '-'      сдвиг, и переход в состояние 17
 
-    '\n'  [вывод с использованием правила 33 (lexpr)]
+    '\n'      [вывод с использованием правила 32 (lexpr)]
+    $default  вывод с использованием правила 32 (lexpr)
 
-    stmt       переход в состояние 72
+    stmt       переход в состояние 68
     nexpr      переход в состояние 19
-    nvariable  переход в состояние 20
-    narr       переход в состояние 21
-    integ      переход в состояние 22
-    lexpr      переход в состояние 23
-    lvariable  переход в состояние 24
-    larr       переход в состояние 25
-    bool       переход в состояние 26
+    integ      переход в состояние 20
+    lexpr      переход в состояние 21
+    lvariable  переход в состояние 22
+    larr       переход в состояние 23
+    bool       переход в состояние 24
 
 
-State 62
+State 58
 
    12 stmt: '{' stmt_list '}' .
 
     $default  вывод с использованием правила 12 (stmt)
 
 
-State 63
+State 59
 
    17 stmt_list: stmt_list stmt .
 
     $default  вывод с использованием правила 17 (stmt_list)
 
 
-State 64
+State 60
 
    14 stmt: '[' lexpr ']' . LABEL '\n'
    15     | '[' lexpr ']' . PLS LABEL '\n'
 
-    LABEL  сдвиг, и переход в состояние 73
-    PLS    сдвиг, и переход в состояние 74
+    LABEL  сдвиг, и переход в состояние 69
+    PLS    сдвиг, и переход в состояние 70
+
+
+State 61
+
+    9 stmt: nexpr AS nexpr . '\n'
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+
+    ';'   сдвиг, и переход в состояние 43
+    EQ    сдвиг, и переход в состояние 44
+    '\n'  сдвиг, и переход в состояние 71
+
+
+State 62
+
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+   24      | nexpr ';' nexpr .  [LOGIC, LOGVAR, AS, ';', PARR, '\n', '(', ')', ']']
+
+    EQ  сдвиг, и переход в состояние 44
+
+    $default  вывод с использованием правила 24 (nexpr)
+
+    Конфликт между правилом 24 и лексемой ';' разрешен выводом (%left ';').
+    Конфликт между правилом 24 и лексемой EQ разрешен сдвигом (';' < EQ).
+
+
+State 63
+
+   19 nexpr: nexpr . EQ nexpr
+   19      | nexpr EQ nexpr .  [LOGIC, LOGVAR, AS, ';', EQ, PARR, '\n', '(', ')', ']']
+   24      | nexpr . ';' nexpr
+
+    $default  вывод с использованием правила 19 (nexpr)
+
+    Конфликт между правилом 19 и лексемой ';' разрешен выводом (';' < EQ).
+    Конфликт между правилом 19 и лексемой EQ разрешен выводом (%left EQ).
+
+
+State 64
+
+   10 stmt: lexpr AS lexpr . '\n'
+
+    '\n'  сдвиг, и переход в состояние 72
 
 
 State 65
 
-    9 stmt: nvariable AS nexpr . '\n'
+   31 lexpr: lvariable EQ bool .
 
-    '\n'  сдвиг, и переход в состояние 75
+    $default  вывод с использованием правила 31 (lexpr)
 
 
 State 66
 
-   25 nvariable: nvariable EQ integ .
+   19 nexpr: nexpr . EQ nexpr
+   24      | nexpr . ';' nexpr
+   36 larr: larr ';' nexpr .  [LOGIC, LOGVAR, AS, ';', PARR, '\n', '(', ')', ']']
 
-    $default  вывод с использованием правила 25 (nvariable)
+    EQ  сдвиг, и переход в состояние 44
+
+    $default  вывод с использованием правила 36 (larr)
+
+    Конфликт между правилом 36 и лексемой ';' разрешен выводом (%left ';').
+    Конфликт между правилом 36 и лексемой EQ разрешен сдвигом (';' < EQ).
 
 
 State 67
 
-   27 narr: narr ';' nexpr .
+   32 lexpr: '(' lexpr ')' .
 
-    $default  вывод с использованием правила 27 (narr)
+    $default  вывод с использованием правила 32 (lexpr)
 
 
 State 68
-
-   10 stmt: lvariable AS lexpr . '\n'
-
-    '\n'  сдвиг, и переход в состояние 76
-
-
-State 69
-
-   36 lvariable: lvariable EQ bool .
-
-    $default  вывод с использованием правила 36 (lvariable)
-
-
-State 70
-
-   38 larr: larr ';' nexpr .
-
-    $default  вывод с использованием правила 38 (larr)
-
-
-State 71
-
-   33 lexpr: '(' lexpr ')' .
-
-    $default  вывод с использованием правила 33 (lexpr)
-
-
-State 72
 
    11 stmt: '(' lexpr ')' stmt .
 
     $default  вывод с использованием правила 11 (stmt)
 
 
-State 73
+State 69
 
    14 stmt: '[' lexpr ']' LABEL . '\n'
 
-    '\n'  сдвиг, и переход в состояние 77
+    '\n'  сдвиг, и переход в состояние 73
 
 
-State 74
+State 70
 
    15 stmt: '[' lexpr ']' PLS . LABEL '\n'
 
-    LABEL  сдвиг, и переход в состояние 78
+    LABEL  сдвиг, и переход в состояние 74
 
 
-State 75
+State 71
 
-    9 stmt: nvariable AS nexpr '\n' .
+    9 stmt: nexpr AS nexpr '\n' .
 
     $default  вывод с использованием правила 9 (stmt)
 
 
-State 76
+State 72
 
-   10 stmt: lvariable AS lexpr '\n' .
+   10 stmt: lexpr AS lexpr '\n' .
 
     $default  вывод с использованием правила 10 (stmt)
 
 
-State 77
+State 73
 
    14 stmt: '[' lexpr ']' LABEL '\n' .
 
     $default  вывод с использованием правила 14 (stmt)
 
 
-State 78
+State 74
 
    15 stmt: '[' lexpr ']' PLS LABEL . '\n'
 
-    '\n'  сдвиг, и переход в состояние 79
+    '\n'  сдвиг, и переход в состояние 75
 
 
-State 79
+State 75
 
    15 stmt: '[' lexpr ']' PLS LABEL '\n' .
 
