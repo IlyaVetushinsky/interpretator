@@ -892,27 +892,27 @@ return NP;
 case 13:
 YY_RULE_SETUP
 #line 60 "FlexOb.l"
-return MF;
+return MF;//1
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 61 "FlexOb.l"
-return MB;
+return MB;//2
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 62 "FlexOb.l"
-return MR;
+return MR;//3
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 63 "FlexOb.l"
-return ML;
+return ML;//4
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 64 "FlexOb.l"
-return TP;
+return TP;//5
 	YY_BREAK
 case 18:
 YY_RULE_SETUP

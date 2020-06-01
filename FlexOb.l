@@ -57,11 +57,11 @@ void yyerror(char *);
 ".#" return PARR;
 "eq" return EQ;
 "np" return NP;
-"mf" return MF;
-"mb" return MB;
-"mr" return MR;
-"ml" return ML;
-"tp" return TP;
+"mf" return MF;//1
+"mb" return MB;//2
+"mr" return MR;//3
+"ml" return ML;//4
+"tp" return TP;//5
 "<-" return AS;
 "please" return PLS;
 "print" return PRINT;

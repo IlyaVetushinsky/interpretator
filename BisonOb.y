@@ -9,7 +9,10 @@
 #include <stdarg.h>
 #include "LangOb.h"
 extern FILE * yyin;
+std::ifstream fin("Land.txt");
 /* prototypes */
+void create_land();
+std::map<C, int> done_Land;
 Node *opr(std::string n, int oper, int nops, ...);
 Node *id(int i, int t);
 Node *con(int value, int t);
@@ -36,6 +39,11 @@ int lb_ballance(Node* p);
 void wrong_lbls();
 int yylex();
 void yyerror(char *s);
+Node* fun(int t);
+Node* moving(Node* p);
+int dir;
+C R_cord; 
+std::map<C,int> Land;
 std::vector<std::string> err_arr;
 std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;    
 std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;   
@@ -60,7 +68,7 @@ char lbll = 0;
 %left EQ
 %right INC DEC PARR
 %nonassoc UMINUS
-%type <nPtr> stmt stmt_list function expr
+%type <nPtr> stmt stmt_list function expr fexpr
 
 %%
 
@@ -85,7 +93,17 @@ program:
 				VarStore.clear();
 				ProcStore.clear();
 				clear_id_store(IdStore);
-				exec($1); freeNode($1);exit(0);}
+				exec($1); freeNode($1);
+				std::ofstream fout("done_Land.txt", std::ofstream::app);
+				std::map<C, int>::iterator it;
+				for (auto it = done_Land.begin(); it != done_Land.end(); ++it) {
+					fout << it->first.X;
+					fout << " ";
+					fout << it->first.Y;
+					fout << " ";
+					std::cout << it->first.X << " " << it->first.Y << std::endl;
+				}
+				exit(0);}
 	;
 	
 function:
@@ -105,6 +123,10 @@ stmt:
 	| LABEL stmt						{ setlabel($1,$2); $$ = $2; }
 	| '[' expr ']' LABEL '\n'			  { $$ = opr("go to", GOTO, 2, $2, id($4,3));}
 	| '[' expr ']' PLS LABEL '\n'		  { $$ = opr("go to", GOTO, 2, $2, id($5,3));}
+	| '(' fexpr ')' stmt  					{ $$ = opr("while", WHILE, 2, $2, $4); }
+	| '[' fexpr ']' LABEL '\n'			  { $$ = opr("go to", GOTO, 2, $2, id($4,3));}
+	| '[' fexpr ']' PLS LABEL '\n'		  { $$ = opr("go to", GOTO, 2, $2, id($5,3));}
+	| fexpr '\n'							{ $$= $1; }
 	;
 
 stmt_list:
@@ -128,14 +150,22 @@ expr:
 	| NP							{ $$ = np(); }
 	;
 
-	
+fexpr:
+	MF								{ $$ = fun(1); }
+	| MB							{ $$ = fun(2); }
+	| MR							{ $$ = fun(3); }
+	| ML							{ $$ = fun(4); }
+	| TP							{ $$ = fun(5); }
 	
 	
 	
 	
 %%
 
-
+Node* fun(int t){
+	Node *p = new FunNode(t);
+	return p;
+}
 
 Node *con(int value, int t) {
 	Node *p = new ConNode(value, t, typeCon);
@@ -371,12 +401,220 @@ void go_proc_er(VarNode* varn1) {
 }
 
 
+Node* moving(Node* p) {
+	FunNode* f = dynamic_cast<FunNode*>(p);
+	if (f->ftype == 1) {
+		if (dir == 1) {
+			C c = { R_cord.X + 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}else if (dir == 2) {
+			C c = { R_cord.X - 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 3) {
+			C c = { R_cord.X, R_cord.Y + 1 };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 4) {
+			C c = { R_cord.X, R_cord.Y - 1 };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+	}else if (f->ftype == 2) {
+		if (dir == 1) {
+			C c = { R_cord.X - 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				dir = 2;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 2) {
+			C c = { R_cord.X + 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.X;
+				dir = 1;
+				done_Land.emplace(R_cord, 0);
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 3) {
+			C c = { R_cord.X, R_cord.Y - 1 };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 4;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 4) {
+			C c = { R_cord.X, R_cord.Y + 1 };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 3;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+	}
+	else if (f->ftype == 3) {
+		if (dir == 1) {
+			C c = { R_cord.X, R_cord.Y - 1 };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 4;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 2) {
+			C c = { R_cord.X, R_cord.Y + 1 };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 3;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 3) {
+			C c = { R_cord.X + 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				dir = 1;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 4) {
+			C c = { R_cord.X - 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				dir = 2;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+	}
+	else 	if (f->ftype == 4) {
+		if (dir == 1) {
+			C c = { R_cord.X, R_cord.Y + 1};
+			if (Land.find(c) == Land.end()) {
+				++R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 3;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 2) {
+			C c = { R_cord.X, R_cord.Y - 1 };
+			if (Land.find(c) == Land.end()) {
+				--R_cord.Y;
+				done_Land.emplace(R_cord, 0);
+				dir = 4;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 3) {
+			C c = { R_cord.X -1 , R_cord.Y};
+			if (Land.find(c) == Land.end()) {
+				--R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				dir = 2;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}
+		else if (dir == 4) {
+			C c = { R_cord.X + 1, R_cord.Y };
+			if (Land.find(c) == Land.end()) {
+				++R_cord.X;
+				done_Land.emplace(R_cord, 0);
+				dir = 1;
+				return con(1, 0);
+			}
+			else {
+				return con(0, 0);
+			}
+		}else 	if (f->ftype == 5) {
+			//C c = { R_cord.X + 1, R_cord.Y };
+			//if (Land.find(c) == Land.end())
+			return con(0, 0);
+		}
+	}
+
+
+
+
+}
+
+
 Node* ex_find_er(Node* p1) {
 	if (!p1) return nullptr;
 	if (lbll == p1->label)
 		lbll = 0;
 	if (!lbll) {
 		switch (p1->type) {
+		case typeFun:  { return con(1, 0); }
 		case typeN: { Null* n = dynamic_cast<Null*>(p1); return n; }
 		case typeCon: {ConNode* conn = dynamic_cast<ConNode*>(p1); return conn; }
 		case typeId: {VarNode* varn = dynamic_cast<VarNode*>(p1); return varn; }
@@ -1041,9 +1279,23 @@ void init_VL(){
 	}
 }
 
+void create_land() {
+	int number1, number2;
+	fin >> number1;
+	fin >> number2;
+	R_cord = { number1, number2 };
+	while (fin >> number1 && fin >> number2) {
+		C c = { number1, number2 };
+		Land.emplace(c, 1);
+	}
+	dir = 1;
+}
+
 int main(void) {
 	yyin = fopen ("./test.txt", "r");
 	init_VL();
+	std::ifstream fin("Land.txt");
+	create_land();
 	yyparse();
 	fclose (yyin);
 	return 0;

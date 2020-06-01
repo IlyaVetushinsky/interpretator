@@ -19,6 +19,7 @@ int find_rec(VarNode* &varn1,VarNode* &varn2);
 void push_Varlist(Node* p);
 int find_var(Node* p);
 extern Node *np();
+Node* moving(Node* p);
 
 Node* ex(Node* p1) {
 	if (!p1) return nullptr;
@@ -26,6 +27,7 @@ Node* ex(Node* p1) {
 		lbl = 0;
 	if (!lbl)
 		switch (p1->type) {
+		case typeFun: { moving(p1); }
 		case typeCon: {ConNode* conn = dynamic_cast<ConNode*>(p1); return conn; }
 		case typeId: {VarNode* varn = dynamic_cast<VarNode*>(p1); return varn; }
 		case typeOpr: {
@@ -437,6 +439,19 @@ void print_Tree(Node *p, int level)
 		if (level){
 			printf("-->");
 		}
+		if (p->type == typeFun){
+					FunNode* f = dynamic_cast<FunNode*> (p);
+					if (f->ftype == 1)
+						std::cout << "mf" << std::endl;
+					else if (f->ftype == 2)
+						std::cout << "mb" << std::endl;
+					else if (f->ftype == 3)
+						std::cout << "mr" << std::endl;
+					else if (f->ftype == 4)
+						std::cout << "ml" << std::endl;
+					else if (f->ftype == 5)
+						std::cout << "tp" << std::endl;
+				} 
 		if(p->type == typeCon) { 
 			ConNode* conn = dynamic_cast<ConNode*>(p);
 			std::cout << conn->value << std::endl;

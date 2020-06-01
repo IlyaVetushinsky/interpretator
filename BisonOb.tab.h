@@ -77,7 +77,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 49 "BisonOb.y" /* yacc.c:1909  */
+#line 57 "BisonOb.y" /* yacc.c:1909  */
 
 	int iValue;                 /* integer value */
 	int sIndex;                /* name *//////////////////////

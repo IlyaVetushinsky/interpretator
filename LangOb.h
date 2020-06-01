@@ -1,4 +1,4 @@
-typedef enum { typeCon, typeId, typeOpr, typeN } nodeEnum;
+typedef enum { typeCon, typeId, typeOpr, typeN, typeFun } nodeEnum;
 
 
 
@@ -54,6 +54,24 @@ typedef class Null : public Node{
 	Null():Node(typeN){;}
 };
 
+typedef class FunNode : public Node{
+public:
+	int ftype;
+	public:
+	FunNode(int t):Node(typeFun){
+		ftype = t;
+	}
+};
+
+struct C{
+	int X;
+	int Y;
+};
+constexpr bool operator < (const C& _Left, const C& _Right) {
+
+	return 1000*_Left.X + _Left.Y < 1000*_Right.X+ _Right.Y;
+}
+
 extern Node *opr(std::string n, int oper, int nops, ...);
 extern Node *id(int i, int t);
 extern Node *con(int value, int t);
@@ -79,6 +97,10 @@ extern Node *np();
 extern void l_ballance(Node* n);
 extern int lb_ballance(Node* p);
 extern void wrong_lbls();
+extern int dir;
+extern C R_cord;
+extern std::map<C,int> Land;
+extern std::map<C, int> done_Land;
 extern std::vector<std::string> err_arr;
 extern std::map<std::vector<int>,std::map<std::vector<int>,int>> VarStore;
 extern std::map<std::vector<int>,std::map<std::vector<int>,Node*>> ProcStore;  
